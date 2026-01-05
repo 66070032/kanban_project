@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        // ตั้งค่าตัวแปรต่างๆ
+        SSH_CRED_ID   = 'SSH_SV_01'
+        REMOTE_IP     = '192.168.1.200'
+        REMOTE_USER   = 'root'
+        TARGET_DIR    = '~/kanban-api'
+        APP_NAME      = 'kanban-api'
+        PORT_MAP      = '3000:3000' // [Port นอก : Port ใน Container]
+    }
+
+    stages {
+        stage('Install & Test') {
+            steps {
+                // รัน Test บนเครื่อง Jenkins ก่อนเพื่อความชัวร์
+                echo 'Installing dependencies and running tests...'
+                sh 'npm install'
+                // sh 'npm test' // เปิดใช้งานถ้าคุณมีไฟล์ Test
+            }
+        }
+
+        stage('Deploy to Remote') {
+            steps {
+                sshagent([env.SSH_CRED_ID]) {
+                    echo "Deploying to ${REMOTE_IP}..."
+                    
+                    // 1. สร้าง Folder และส่งโค้ดขึ้นไป (ใช้ rsync จะเร็วและประหยัด Bandwidth)
+                    sh "ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_IP} 'mkdir -p ${TARGET_DIR}'"
+                    sh "rsync -avz --delete --exclude 'node_modules' --exclude '.git' ./ ${REMOTE_USER}@${REMOTE_IP}:${TARGET_DIR}"
+
+                    // 2. Build และ Restart Container บนเครื่องปลายทาง
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_IP} '
+                            cd ${TARGET_DIR} && \
+                            
+                            echo "Building Docker Image..." && \
+                            docker build -t ${APP_NAME} . && \
+                            
+                            echo "Stopping old container..." && \
+                            docker rm -f ${APP_NAME} || true && \
+                            
+                            echo "Starting new container..." && \
+                            docker run -d \
+                                --name ${APP_NAME} \
+                                -p ${PORT_MAP} \
+                                --restart always \
+                                ${APP_NAME}
+                        '
+                    """
+                }
+            }
+        }
+
+        stage('Clean up') {
+            steps {
+                // ลบ node_modules ที่เครื่อง Jenkins เพื่อประหยัดที่ (เลือกได้)
+                sh 'rm -rf node_modules'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Successfully deployed Express API!'
+        }
+        failure {
+            echo 'Deployment failed. Please check the logs.'
+        }
+    }
+}
