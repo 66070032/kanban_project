@@ -13,5 +13,4 @@ app.get('/health', (req, res) => {
 
 app.listen(3000, () => {
   console.log('API running on port 3000');
-  console.log(process.env.DATABASE_URL)
 });

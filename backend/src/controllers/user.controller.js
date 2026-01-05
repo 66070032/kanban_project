@@ -1,10 +1,13 @@
 const pool = require('../db');
+const bcrypt = require('bcrypt');
 
 //
 // CREATE USER
 //
 exports.createUser = async (req, res) => {
-  const { email, displayName, passwordHash } = req.body;
+  const { email, displayName, password } = req.body;
+
+  const passwordHash = await bcrypt.hash(password, 10);
 
   try {
     const { rows } = await pool.query(
