@@ -41,7 +41,7 @@ pipeline {
                                     --name ${APP_NAME} \
                                     -p 3000:3000 \
                                     --restart always \
-                                    -e DATABASE_URL=${DATABASE _URL} \
+                                    -e DATABASE_URL=${DATABASE_URL} \
                                     ${APP_NAME}
                             '
                         """
