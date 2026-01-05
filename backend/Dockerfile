@@ -13,4 +13,4 @@ COPY . .
 # Express มักใช้ Port 3000
 EXPOSE 3000
 
-CMD ["node", "src/index.js"]
+CMD ["node", "src/app.js"]
