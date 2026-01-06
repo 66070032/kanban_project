@@ -99,3 +99,6 @@
 **Out of Scope**
 - Chat แบบ real-time
 - Social feed
+
+## Prototype
+- Link: https://github.com/66070032/kanban_project
