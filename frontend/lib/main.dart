@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kanban_project/features/profile/presentation/pages/profile_pages.dart';
 // Import the new Landing Page
 import 'features/landing/presentation/pages/landing_page.dart';
 
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF2F5F9),
       ),
-      home: const LandingPage(),
+      home: const ProfilePage(),
     );
   }
 }
