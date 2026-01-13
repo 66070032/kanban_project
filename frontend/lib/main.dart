@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// Import the new Landing Page
 import 'features/landing/presentation/pages/landing_page.dart';
 
 void main() {
