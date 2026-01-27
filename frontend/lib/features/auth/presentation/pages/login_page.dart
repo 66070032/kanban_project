@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kanban_project/features/profile/presentation/pages/profile_pages.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../widgets/auth_input_field.dart';
@@ -84,7 +85,14 @@ class LoginPage extends StatelessWidget {
                   PrimaryButton(
                     text: 'Login',
                     onPressed: () {
-                      debugPrint("Login Pressed");
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
+                        ),
+                        (route) =>
+                            false, // This returns 'false' to remove all previous routes
+                      );
                     },
                   ),
                   const SizedBox(height: 24),
