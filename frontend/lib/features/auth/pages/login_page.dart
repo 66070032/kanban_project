@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kanban_project/features/profile/presentation/pages/profile_pages.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/primary_button.dart';
-import '../widgets/auth_input_field.dart';
+import 'package:kanban_project/features/profile/pages/profile_pages.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/primary_button.dart';
+import '../presentation/widgets/auth_input_field.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
