@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'features/landing/pages/landing_page.dart';
 import 'features/profile/pages/profile_pages.dart';
+import 'features/dashboard/widgets/dashboard_screen.dart';
 
 void main() {
   runApp(const MyApp());
