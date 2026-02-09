@@ -43,7 +43,7 @@ class PrimaryButton extends StatelessWidget {
             ),
             if (icon != null) ...[
               const SizedBox(width: 8),
-              Icon(icon, size: 20),
+              Icon(icon!, size: 20),
             ],
           ],
         ),

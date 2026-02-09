@@ -14,6 +14,9 @@ class AppColors {
   static const Color purpleTagBg = Color(0xFFF3E8FF);
   static const Color purpleTagText = Color(0xFF9333EA);
 
+  static const Color redTagBg = Color(0xFFFFD0D1);
+  static const Color redTagText = Color(0xFFEF4444);
+
   static const Color greenTagBg = Color(0xFFDCFCE7);
   static const Color greenTagText = Color(0xFF16A34A);
 }

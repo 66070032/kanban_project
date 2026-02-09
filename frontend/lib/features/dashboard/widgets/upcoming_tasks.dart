@@ -36,14 +36,15 @@ class UpcomingTasksList extends StatelessWidget {
           const SizedBox(height: 12),
           // Task 1
           const TaskCard(
-            tagLabel: "History",
-            tagColor: AppColors.blueTagBg,
-            tagTextColor: AppColors.blueTagText,
+            tagLabel: "High Priority",
+            tagColor: AppColors.redTagBg,
+            tagTextColor: AppColors.redTagText,
+
             timeLabel: "Due Tomorrow • 4:00 PM",
             title: "History Project Research",
             subtitle: "Find primary sources for the industrial revolution.",
-            senderName: "Sarah",
-            senderImage:
+            // senderName: "Sarah",
+            groupImage:
                 "https://lh3.googleusercontent.com/aida-public/AB6AXuCQUq7KoMp-wQHitECJg8-i3mKRV5_kbGJvNHJ0iNzKECK-rjkr-KqX4N9zmN9n4ZRNIyYyR7wIXf2JHxDWQEjKsWo38NZX-l1qnmr99T_Z9CEmVNGlFTs5AC_u3_B4jOXbbF8MmWl8wk2rxW68qlpKd1JrRh2AG0Mybnz6okqQEYiIZJzGDNrQ6WUR6sjuOtHSuJvbDDjeFlEOQOQ27pmzkNI6po8xKzz4x24I27fTTrWrmDCK9sXx-iwyT4hiH33VFnWr2tZ-xLo",
             duration: "0:32",
             showWaveform: true,
@@ -51,14 +52,14 @@ class UpcomingTasksList extends StatelessWidget {
           const SizedBox(height: 16),
           // Task 2
           const TaskCard(
-            tagLabel: "Team",
-            tagColor: AppColors.purpleTagBg,
-            tagTextColor: AppColors.purpleTagText,
+            tagLabel: "High Priority",
+            tagColor: AppColors.redTagBg,
+            tagTextColor: AppColors.redTagText,
             timeLabel: "Today • 2:30 PM",
             title: "Team Meeting Notes",
             subtitle: "Review the audio recording from yesterday's sync.",
-            senderName: "Mark",
-            senderImage:
+            // senderName: "Mark",
+            groupImage:
                 "https://lh3.googleusercontent.com/aida-public/AB6AXuBnKFraXbKRAaEbOP4LatjKcFAecciXaHrG3odWmMYXA3YwWocA_CnsKf7gyUU3tvWqFXKmGR2L3Pc2jzks_E50T0HlSCvUgZP0DITaJcBVs6bYKF0HTMpp3N9rhXKSEFeeJ1G-Rd6aHr4ieKwTHlVP3QnLZj-B4YcPiqSTiwtLQn0BJHlQG1cIJR5PiT-Gm8b0_qU4UA5n9SFyQs__mfJPNMP7XJhwn11iLz4vPAsdTj-iIVvHREWHnF4AmCZWTntIBwgKqYQlRcI",
             duration: "1:15",
             showWaveform: false,
@@ -66,14 +67,14 @@ class UpcomingTasksList extends StatelessWidget {
           const SizedBox(height: 16),
           // Task 3
           const TaskCard(
-            tagLabel: "Biology",
-            tagColor: AppColors.greenTagBg,
-            tagTextColor: AppColors.greenTagText,
+            tagLabel: "High Priority",
+            tagColor: AppColors.redTagBg,
+            tagTextColor: AppColors.redTagText,
             timeLabel: "Friday • 9:00 AM",
             title: "Review Biology Slides",
             subtitle: "Chapter 4: Cell structure and functions prep.",
-            senderName: "Prof. Davis",
-            senderImage:
+            // senderName: "Prof. Davis",
+            groupImage:
                 "https://lh3.googleusercontent.com/aida-public/AB6AXuCOHyQUwQ30lDhF3wJd5Cv-82KJK2MCat_51Gf1KDUkQAbI8hKpswoFCfKf5h4k6BazlfxdkEHl0q3MvtM4-RNwBUQQvtWg1O_T627dD6C8BSI0CPZ7JhZsmemGWB1RXtTQjnlOk4pQBAgM0qcC_Gcu8SGxhuEAO6IuJg_tTyaf2ueiXkmP0U7WxCRZZK3LFuRzrWt2hMxYxlUPCQzvYYVJQg0odSaYoqpKJTE3-0E01PHIY_6vZlznyk56ns81uWSNuYJUJEX0K2w",
             duration: "0:45",
             showWaveform: false,
@@ -91,8 +92,8 @@ class TaskCard extends StatelessWidget {
   final String timeLabel;
   final String title;
   final String subtitle;
-  final String senderName;
-  final String senderImage;
+  // final String senderName;
+  final String groupImage;
   final String duration;
   final bool showWaveform;
 
@@ -104,8 +105,8 @@ class TaskCard extends StatelessWidget {
     required this.timeLabel,
     required this.title,
     required this.subtitle,
-    required this.senderName,
-    required this.senderImage,
+    // required this.senderName,
+    required this.groupImage,
     required this.duration,
     required this.showWaveform,
   });
@@ -170,17 +171,6 @@ class TaskCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            timeLabel,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: AppColors.subText,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -193,69 +183,41 @@ class TaskCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
+                    // Text(
+                    //   subtitle,
+                    //   maxLines: 1,
+                    //   overflow: TextOverflow.ellipsis,
+                    //   style: const TextStyle(
+                    //     color: AppColors.subText,
+                    //     fontSize: 13,
+                    //   ),
+                    // ),
                     Text(
-                      subtitle,
-                      maxLines: 1,
+                      timeLabel,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: AppColors.subText,
-                        fontSize: 13,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              // Play Button
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: showWaveform ? AppColors.cyan : AppColors.lightGray,
-                  shape: BoxShape.circle,
-                  boxShadow: showWaveform
-                      ? [
-                          BoxShadow(
-                            color: AppColors.cyan.withOpacity(0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Icon(
-                  Icons.play_arrow_rounded,
-                  color: showWaveform ? Colors.white : AppColors.text,
-                  size: 28,
-                ),
+              // Group Image
+              CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(groupImage),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: AppColors.lightGray),
           const SizedBox(height: 12),
-          // Footer: Sender & Waveform
+          // Footer: Audio Visualizer / Time
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundImage: NetworkImage(senderImage),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    "From $senderName",
-                    style: const TextStyle(
-                      color: AppColors.subText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              // Audio Visualizer / Time
               if (showWaveform)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
