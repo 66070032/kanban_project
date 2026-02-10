@@ -4,7 +4,9 @@ import 'package:kanban_project/features/group/group_page.dart';
 // import 'features/landing/pages/landing_page.dart';
 import 'features/profile/pages/profile_pages.dart';
 import 'features/dashboard/widgets/dashboard_screen.dart';
-import 'features/group/pages/group_screen.dart';
+import 'features/group/group_page.dart';
+import 'main_wrapper.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -22,7 +24,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF2F5F9),
       ),
-      home: const ProfilePage(),
+      home: const MainWrapper(),
     );
   }
 }

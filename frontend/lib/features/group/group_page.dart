@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/group_model.dart';
 import 'group_cards.dart';
+import '/misc/header.dart';
 
 class GroupPage extends StatefulWidget {
   const GroupPage({super.key});
@@ -26,47 +27,19 @@ class _GroupPageState extends State<GroupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // Header
-              Row(
-                children: [
-                  const CircleAvatar(backgroundColor: Colors.grey, radius: 24),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Monday, October 24",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                      Text(
-                        "Good morning, Jessica",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(Icons.notifications_outlined),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+    return Container(
+      color: Colors.grey[50],
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Header(),
 
-              // Chips
-              SingleChildScrollView(
+            const SizedBox(height: 12),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: List.generate(_tags.length, (index) {
@@ -77,7 +50,6 @@ class _GroupPageState extends State<GroupPage> {
                         label: Text(_tags[index]),
                         selected: isSelected,
                         showCheckmark: false,
-                        // Colors
                         selectedColor: Colors.cyan,
                         backgroundColor: Colors.transparent,
                         labelStyle: TextStyle(
@@ -86,7 +58,6 @@ class _GroupPageState extends State<GroupPage> {
                               ? FontWeight.bold
                               : FontWeight.normal,
                         ),
-                        // Borders & Shape
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -101,11 +72,14 @@ class _GroupPageState extends State<GroupPage> {
                   }),
                 ),
               ),
-              const SizedBox(height: 20),
+            ),
+            const SizedBox(height: 20),
 
-              // Grid
-              Expanded(
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: GridView.builder(
+                  padding: const EdgeInsets.only(bottom: 20),
                   itemCount: _groups.length + 1,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -121,37 +95,9 @@ class _GroupPageState extends State<GroupPage> {
                   },
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-
-      // Bottom Nav
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        selectedItemColor: Colors.cyan,
-        unselectedItemColor: Colors.black,
-        currentIndex: 2,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            label: "Calendar",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            label: "Groups",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profile",
-          ),
-        ],
       ),
     );
   }

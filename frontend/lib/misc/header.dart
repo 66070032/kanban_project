@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
+import '../core/theme/app_colors.dart';
 
-class DashboardHeader extends StatelessWidget {
-  const DashboardHeader({super.key});
+class Header extends StatelessWidget {
+  const Header({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,7 @@ class DashboardHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Monday, Oct 24",
+                  "Monday, October 24",
                   style: TextStyle(
                     color: AppColors.subText,
                     fontSize: 12,

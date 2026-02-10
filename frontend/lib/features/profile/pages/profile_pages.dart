@@ -161,7 +161,7 @@ class _ProfileHeader extends StatelessWidget {
               child: const CircleAvatar(
                 radius: 50,
                 backgroundImage: NetworkImage(
-                  'https://i.pravatar.cc/300',
+                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDW3Rqfn_2HqhNxsKkmK7qrOu7s0pWBzktN76f1PpP1r063Q79xXbJ2qLec0PM_YnQDAjFBDeKYZCDn5-uiu16z7Oocoq2mq2okiRvyvD3uYh25j--2ZM8pGipQzdtd0sPJ0oejhBigJHn2NeQkC9-mYmVvZEvmLPFo2Ytx-WBXL6yYePvShfYS1csmHGcy--Ta6GNyyPNg9T21amSLVHWwrabGsbd8wxIwkGSr-UB_B9PyTiHu_dkVQfioAWN0ne-ZRNqC-wotSmo',
                 ), // Placeholder
                 backgroundColor: AppColors.lightGray,
               ),
@@ -182,7 +182,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Jessica Doe',
+          'Alex Anderson',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -191,7 +191,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'jessica.doe@example.com',
+          'alex.anderson@example.com',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             color: AppColors.subText,

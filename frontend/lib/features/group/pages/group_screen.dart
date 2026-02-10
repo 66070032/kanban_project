@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widget/group_card.dart';
-import '../../dashboard/widgets/dashboard_header.dart';
-import '../../dashboard/widgets/navigation.dart';
+import '../../../misc/header.dart';
+import '/misc/navigation.dart';
 import '../widget/group_tab.dart';
 
 class GroupScreen extends StatelessWidget {
@@ -17,7 +17,7 @@ class GroupScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              const DashboardHeader(),
+              const Header(),
               const GroupTab(),
               const SizedBox(height: 16), // แนะนำให้เพิ่มระยะห่างนิดหน่อย
               Expanded(
@@ -43,7 +43,6 @@ class GroupScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavigation(),
     );
   }
 }
