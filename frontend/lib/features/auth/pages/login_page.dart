@@ -5,8 +5,30 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../presentation/widgets/auth_input_field.dart';
 
-class LoginPage extends StatelessWidget {
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  String? errorMessage;
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,31 +90,41 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Inputs
-                  const AuthInputField(
+                  AuthInputField(
                     label: 'Email',
                     hintText: 'Enter your email',
                     keyboardType: TextInputType.emailAddress,
+                    controller: emailController,
                   ),
                   const SizedBox(height: 20),
-                  const AuthInputField(
+                  AuthInputField(
                     label: 'Password',
                     hintText: 'Enter your password',
                     isPassword: true,
+                    controller: passwordController,
                   ),
+                  if (errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ],
                   const SizedBox(height: 32),
 
                   // Button
                   PrimaryButton(
                     text: 'Login',
                     onPressed: () {
-                      Navigator.pushAndRemoveUntil(
+                      handleLogin();
+                      /* Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const ProfilePage(),
                         ),
                         (route) =>
                             false, // This returns 'false' to remove all previous routes
-                      );
+                      ); */
                     },
                   ),
                   const SizedBox(height: 24),
@@ -130,5 +162,49 @@ class LoginPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> handleLogin() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    setState(() {
+      errorMessage = null;
+      isLoading = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse("http://localhost:3000/auth/login"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      debugPrint("Login response: $data");
+      debugPrint("Status code: ${response.statusCode}");
+
+      if (response.statusCode == 200 && data['user'] != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfilePage()),
+        );
+      } else {
+        setState(() {
+          errorMessage = "Email or password is incorrect";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Server error";
+      });
+    }
+
+    setState(() {
+      isLoading = false;
+    });
   }
 }

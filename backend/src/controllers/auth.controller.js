@@ -1,4 +1,5 @@
 const pool = require('../db');
+const bcrypt = require('bcrypt');
 
 //
 // LOGIN
@@ -21,6 +22,7 @@ exports.login = async (req, res) => {
 
     // 2. ตรวจสอบรหัสผ่าน (เปรียบเทียบรหัสที่ส่งมา กับ Hash ใน DB)
     const isMatch = await bcrypt.compare(password, user.password);
+
 
     if (!isMatch) {
       return res.status(401).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' });

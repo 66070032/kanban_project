@@ -7,11 +7,13 @@ class AuthInputField extends StatelessWidget {
   final String hintText;
   final bool isPassword;
   final TextInputType keyboardType;
+  final TextEditingController controller;
 
   const AuthInputField({
     super.key,
     required this.label,
     required this.hintText,
+    required this.controller,
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
   });
@@ -36,6 +38,7 @@ class AuthInputField extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: TextField(
+            controller: controller,
             obscureText: isPassword,
             keyboardType: keyboardType,
             style: GoogleFonts.plusJakartaSans(
