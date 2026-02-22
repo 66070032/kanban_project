@@ -6,8 +6,10 @@ app.use(express.json());
 
 const userRoutes = require('./routes/user.routes');
 const taskRoutes = require('./routes/task.routes');
+const authRoutes = require('./routes/auth.routes');
 app.use('/users', userRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/auth', authRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
