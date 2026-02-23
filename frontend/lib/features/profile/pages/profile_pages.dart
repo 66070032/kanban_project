@@ -165,12 +165,21 @@ class _ProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const CircleAvatar(
+              child: CircleAvatar(
                 radius: 50,
-                backgroundImage: NetworkImage(
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDW3Rqfn_2HqhNxsKkmK7qrOu7s0pWBzktN76f1PpP1r063Q79xXbJ2qLec0PM_YnQDAjFBDeKYZCDn5-uiu16z7Oocoq2mq2okiRvyvD3uYh25j--2ZM8pGipQzdtd0sPJ0oejhBigJHn2NeQkC9-mYmVvZEvmLPFo2Ytx-WBXL6yYePvShfYS1csmHGcy--Ta6GNyyPNg9T21amSLVHWwrabGsbd8wxIwkGSr-UB_B9PyTiHu_dkVQfioAWN0ne-ZRNqC-wotSmo',
-                ), // Placeholder
                 backgroundColor: AppColors.lightGray,
+                backgroundImage: user?.avatarUrl != null &&
+                        user!.avatarUrl!.isNotEmpty
+                    ? NetworkImage(user.avatarUrl!)
+                    : null,
+                child: user?.avatarUrl == null ||
+                        user!.avatarUrl!.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.grey,
+                      )
+                    : null,
               ),
             ),
             Positioned(

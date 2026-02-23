@@ -180,7 +180,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://localhost:3000/auth/login"),
+        Uri.parse("https://kanban.jokeped.xyz/auth/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": email,

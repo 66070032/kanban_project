@@ -8,6 +8,7 @@ import 'features/group/group_page.dart';
 import 'main_wrapper.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'auth_gate.dart';
 
 void main() {
   runApp(
@@ -30,7 +31,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF2F5F9),
       ),
-      home: const MainWrapper(),
+      home: const AuthGate(),
     );
   }
 }
