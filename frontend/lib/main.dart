@@ -7,8 +7,14 @@ import 'features/dashboard/widgets/dashboard_screen.dart';
 import 'features/group/group_page.dart';
 import 'main_wrapper.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

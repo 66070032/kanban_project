@@ -8,14 +8,19 @@ import '../presentation/widgets/auth_input_field.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class LoginPage extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../models/user_model.dart';
+import '../../profile/pages/profile_pages.dart';
+
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -188,9 +193,15 @@ class _LoginPageState extends State<LoginPage> {
       debugPrint("Status code: ${response.statusCode}");
 
       if (response.statusCode == 200 && data['user'] != null) {
+        final user = User.fromJson(data["user"]);
+
+        ref.read(authProvider.notifier).setUser(user);
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ProfilePage()),
+          MaterialPageRoute(
+            builder: (_) => const ProfilePage(),
+          ),
         );
       } else {
         setState(() {

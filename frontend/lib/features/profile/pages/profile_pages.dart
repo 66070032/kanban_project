@@ -4,11 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/pages/login_page.dart';
 
-class ProfilePage extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../providers/auth_provider.dart';
+
+class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
     return Scaffold(
       backgroundColor: const Color(0xFFF2F5F9),
       appBar: AppBar(
@@ -28,7 +32,7 @@ class ProfilePage extends StatelessWidget {
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            const _ProfileHeader(),
+            _ProfileHeader(user: user),
             const SizedBox(height: 24),
 
             const Row(
@@ -102,11 +106,12 @@ class ProfilePage extends StatelessWidget {
               width: double.infinity,
               child: TextButton(
                 onPressed: () {
+                  ref.read(authProvider.notifier).logout();
+
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) =>
-                        false, // This returns 'false' to remove all previous routes
+                    (route) => false,
                   );
                 },
                 style: TextButton.styleFrom(
@@ -137,7 +142,9 @@ class ProfilePage extends StatelessWidget {
 // Sub-components
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader();
+  final dynamic user;
+
+  const _ProfileHeader({required this.user});
 
   @override
   Widget build(BuildContext context) {
@@ -182,7 +189,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Alex Anderson',
+          user?.displayName ?? 'No Name',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 24,
             fontWeight: FontWeight.w700,
@@ -191,7 +198,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'alex.anderson@example.com',
+          user?.email ?? '',
           style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             color: AppColors.subText,
