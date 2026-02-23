@@ -2,13 +2,14 @@ const pool = require('../db');
 
 exports.getReminders = async (req, res) => {
   try {
+    const userId = req.params;
     const { rows } = await pool.query(
       `SELECT id, user_id, title, description, due_date,
               is_completed, is_sent, created_at, updated_at
        FROM reminders
        WHERE user_id = $1
        ORDER BY due_date ASC`,
-      [req.user.id]
+      [userId]
     );
 
     res.json(rows);
@@ -26,8 +27,8 @@ exports.getReminderById = async (req, res) => {
       `SELECT id, user_id, title, description, due_date,
               is_completed, is_sent, created_at, updated_at
        FROM reminders
-       WHERE id = $1 AND user_id = $2`,
-      [id, req.user.id]
+       WHERE id = $1`,
+      [id]
     );
 
     if (rows.length === 0) {
