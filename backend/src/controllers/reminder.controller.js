@@ -2,7 +2,7 @@ const pool = require('../db');
 
 exports.getReminders = async (req, res) => {
   try {
-    const userId = req.params;
+    const { userId } = req.params;
     const { rows } = await pool.query(
       `SELECT id, user_id, title, description, due_date,
               is_completed, is_sent, created_at, updated_at
