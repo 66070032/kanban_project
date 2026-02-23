@@ -6,6 +6,7 @@ import '../../auth/pages/login_page.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../providers/dashboard_provider.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});
@@ -35,23 +36,51 @@ class ProfilePage extends ConsumerWidget {
             _ProfileHeader(user: user),
             const SizedBox(height: 24),
 
-            const Row(
+            Row(
               children: [
                 Expanded(
-                  child: _StatCard(
-                    label: 'Tasks Left',
-                    value: '10',
-                    icon: Icons.assignment_outlined,
-                    iconColor: AppColors.cyan,
+                  child: ref.watch(taskCountProvider).when(
+                    data: (count) => _StatCard(
+                      label: 'Tasks Left',
+                      value: count.toString(),
+                      icon: Icons.assignment_outlined,
+                      iconColor: AppColors.cyan,
+                    ),
+                    loading: () => const _StatCard(
+                      label: 'Tasks Left',
+                      value: '...',
+                      icon: Icons.assignment_outlined,
+                      iconColor: AppColors.cyan,
+                    ),
+                    error: (_, __) => const _StatCard(
+                      label: 'Tasks Left',
+                      value: '0',
+                      icon: Icons.assignment_outlined,
+                      iconColor: AppColors.cyan,
+                    ),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: _StatCard(
-                    label: 'Reminders',
-                    value: '4',
-                    icon: Icons.notifications_outlined,
-                    iconColor: Color(0xFFFF9052),
+                  child: ref.watch(reminderCountProvider).when(
+                    data: (count) => _StatCard(
+                      label: 'Reminders',
+                      value: count.toString(),
+                      icon: Icons.notifications_outlined,
+                      iconColor: Color(0xFFFF9052),
+                    ),
+                    loading: () => const _StatCard(
+                      label: 'Reminders',
+                      value: '...',
+                      icon: Icons.notifications_outlined,
+                      iconColor: Color(0xFFFF9052),
+                    ),
+                    error: (_, __) => const _StatCard(
+                      label: 'Reminders',
+                      value: '0',
+                      icon: Icons.notifications_outlined,
+                      iconColor: Color(0xFFFF9052),
+                    ),
                   ),
                 ),
               ],

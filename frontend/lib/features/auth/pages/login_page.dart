@@ -189,8 +189,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
 
       final data = jsonDecode(response.body);
-      debugPrint("Login response: $data");
-      debugPrint("Status code: ${response.statusCode}");
 
       if (response.statusCode == 200 && data['user'] != null) {
         final user = User.fromJson(data["user"]);
