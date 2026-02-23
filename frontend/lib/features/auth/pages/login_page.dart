@@ -12,6 +12,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
 import '../../profile/pages/profile_pages.dart';
+import '../../group/pages/group_screen.dart';
+import '../../../features/dashboard/widgets/dashboard_screen.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -21,7 +23,6 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -182,10 +183,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final response = await http.post(
         Uri.parse("https://kanban.jokeped.xyz/auth/login"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
+        body: jsonEncode({"email": email, "password": password}),
       );
 
       final data = jsonDecode(response.body);
@@ -199,9 +197,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const ProfilePage(),
-          ),
+          MaterialPageRoute(builder: (_) => const GroupScreen()),
         );
       } else {
         setState(() {
