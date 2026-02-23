@@ -6,24 +6,6 @@ exports.getReminders = async (req, res) => {
       `SELECT id, user_id, title, description, due_date,
               is_completed, is_sent, created_at, updated_at
        FROM reminders
-       ORDER BY due_date ASC`,
-      [req.user.id]
-    );
-
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
-
-exports.getRemindersByUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { rows } = await pool.query(
-      `SELECT id, user_id, title, description, due_date,
-              is_completed, is_sent, created_at, updated_at
-       FROM reminders
        WHERE user_id = $1
        ORDER BY due_date ASC`,
       [req.user.id]
