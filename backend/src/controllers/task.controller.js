@@ -21,6 +21,19 @@ exports.getTasks = async (req, res) => {
   res.json(rows);
 };
 
+// ดึง Task ทั้งหมด (พร้อมชื่อคนรับผิดชอบ)
+exports.getTasksByAssignee = async (req, res) => {
+  const { assignee_id } = req.params;
+  const { rows } = await pool.query(`
+    SELECT t.*, u.display_name as assignee_name 
+    FROM tasks t 
+    LEFT JOIN users u ON t.assignee_id = u.id 
+    ORDER BY t.created_at DESC
+    WHERE t.assignee_id = $1
+  `);
+  res.json(rows);
+};
+
 // อัปเดต Status (เช่น ย้ายจาก todo -> doing)
 exports.updateTask = async (req, res) => {
   const { id } = req.params;

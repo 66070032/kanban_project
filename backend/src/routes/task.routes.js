@@ -4,6 +4,7 @@ const controller = require('../controllers/task.controller');
 
 // ดึงรายการ Task ทั้งหมด
 router.get('/', controller.getTasks);
+router.get('/assignee/:assigneeId', controller.getTasksByAssignee);
 
 // สร้าง Task ใหม่
 router.post('/', controller.createTask);
