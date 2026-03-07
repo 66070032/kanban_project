@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kanban_project/features/profile/pages/profile_pages.dart';
+import 'package:kanban_project/main_wrapper.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../presentation/widgets/auth_input_field.dart';
@@ -21,7 +22,6 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -182,10 +182,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final response = await http.post(
         Uri.parse("https://kanban.jokeped.xyz/auth/login"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email,
-          "password": password,
-        }),
+        body: jsonEncode({"email": email, "password": password}),
       );
 
       final data = jsonDecode(response.body);
@@ -197,9 +194,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const ProfilePage(),
-          ),
+          MaterialPageRoute(builder: (_) => const MainWrapper()),
         );
       } else {
         setState(() {

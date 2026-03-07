@@ -17,18 +17,9 @@ class _StatusTabsState extends State<StatusTabs> {
 
   // ข้อมูลของ Tab (สามารถรับมาจาก API หรือ Prop ได้ในอนาคต)
   final List<Map<String, dynamic>> _tabs = [
-    {
-      "label": "Todo (12)",
-      "icon": Icons.radio_button_unchecked,
-    },
-    {
-      "label": "Doing (3)",
-      "icon": Icons.play_circle_outline,
-    },
-    {
-      "label": "Done (5)",
-      "icon": Icons.check_circle_outline,
-    },
+    {"label": "Todo (12)", "icon": Icons.radio_button_unchecked},
+    {"label": "Doing (3)", "icon": Icons.play_circle_outline},
+    {"label": "Done (5)", "icon": Icons.check_circle_outline},
   ];
 
   @override
@@ -55,7 +46,6 @@ class _StatusTabsState extends State<StatusTabs> {
               }
             },
             child: StatusPill(
-              icon: tab['icon'],
               label: tab['label'],
               isActive: isSelected, // ส่งค่า true ถ้า index ตรงกัน
             ),
@@ -66,58 +56,54 @@ class _StatusTabsState extends State<StatusTabs> {
   }
 }
 
-// --- StatusPill (เหมือนเดิม ปรับแค่ const นิดหน่อย) ---
 class StatusPill extends StatelessWidget {
-  final IconData icon;
   final String label;
   final bool isActive;
 
-  const StatusPill({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.isActive,
-  });
+  const StatusPill({super.key, required this.label, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
-    // ใช้ AnimatedContainer เพื่อความสมูทเวลาเปลี่ยนสี (Optional)
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.cyan : Colors.white,
+        color: isActive ? const Color(0xFF00C7FF) : const Color(0xFFE5E5EA),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [
-                const BoxShadow(
-                  color: AppColors.cardShadow,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isActive ? Colors.white : AppColors.subText,
+          // Radio Icon Mimic
+          Container(
+            width: 14,
+            height: 14,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isActive ? Colors.white : Colors.grey.shade500,
+                width: 1.5,
+              ),
+            ),
+            child: isActive
+                ? Center(
+                    child: Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.white : AppColors.text.withOpacity(0.8),
+              color: isActive ? Colors.white : Colors.grey.shade600,
               fontWeight: FontWeight.w600,
-              fontSize: 14,
+              fontSize: 13,
             ),
           ),
         ],
