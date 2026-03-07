@@ -197,7 +197,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const GroupScreen()),
+          MaterialPageRoute(builder: (_) => const ProfilePage()),
         );
       } else {
         setState(() {
