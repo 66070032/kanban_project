@@ -27,6 +27,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
   void initState() {
     super.initState();
     _currentStatus = widget.task.status ?? 'todo';
+    _voiceInstructionPath = widget.task.voiceInstructionUrl;
   }
 
   @override
@@ -220,13 +221,24 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              if (_voiceInstructionPath != null)
+              if (_voiceInstructionPath != null &&
+                  _voiceInstructionPath!.startsWith('http'))
+                // Existing voice from server - use as URL
+                VoicePlayerWidget(
+                  audioPath: '',
+                  audioUrl: _voiceInstructionPath,
+                  title: 'Voice Instruction',
+                  accentColor: Colors.cyan[400]!,
+                )
+              else if (_voiceInstructionPath != null)
+                // New recording - use as local file path
                 VoicePlayerWidget(
                   audioPath: _voiceInstructionPath!,
                   title: 'Voice Instruction',
                   accentColor: Colors.cyan[400]!,
                 )
               else
+                // No voice - show recorder
                 VoiceRecorderWidget(
                   title: 'Record Voice Instruction',
                   accentColor: Colors.cyan[400]!,
@@ -314,33 +326,54 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
   Future<void> _handleUpdateTask() async {
     setState(() => _isLoading = true);
 
-    final updates = {
-      'status': _currentStatus,
-      if (_voiceInstructionPath != null)
-        'voiceInstructionPath': _voiceInstructionPath,
-    };
+    try {
+      // First, upload voice instruction if it exists
+      if (_voiceInstructionPath != null &&
+          _voiceInstructionPath != widget.task.voiceInstructionUrl) {
+        await ref
+            .read(tasksProvider.notifier)
+            .uploadVoiceInstruction(widget.task.id, _voiceInstructionPath!);
+      }
 
-    final success = await ref
-        .read(tasksProvider.notifier)
-        .updateTask(widget.task.id, updates);
+      // Then, update task metadata
+      final updates = {
+        'title': widget.task.title,
+        'description': widget.task.description ?? '',
+        'status': _currentStatus,
+        'assignee_id': widget.task.assigneeId,
+      };
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      final success = await ref
+          .read(tasksProvider.notifier)
+          .updateTask(widget.task.id, updates);
 
-    if (success) {
-      final user = ref.read(authProvider);
-      if (user != null) ref.invalidate(userTasksProvider(user.id));
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
+        final user = ref.read(authProvider);
+        if (user != null) ref.invalidate(userTasksProvider(user.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update task. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Task updated successfully'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to update task. Please try again.'),
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
