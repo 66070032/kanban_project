@@ -7,12 +7,13 @@ import 'auth_provider.dart';
 
 /// Task Service Provider - Manages task API calls
 class TaskService {
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://kanban.jokeped.xyz';
 
-  /// Get all tasks for current user
   static Future<List<Task>> getUserTasks(String userId) async {
     try {
-      final res = await http.get(Uri.parse('$baseUrl/tasks/assignee/$userId'));
+      final res = await http
+          .get(Uri.parse('$baseUrl/tasks/assignee/$userId'))
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);

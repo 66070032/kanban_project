@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
@@ -201,12 +202,10 @@ class ProfileHeader extends StatelessWidget {
                 ],
               ),
               child: CircleAvatar(
+                key: ValueKey(user?.avatarUrl),
                 radius: 50,
                 backgroundColor: AppColors.lightGray,
-                backgroundImage:
-                    user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
-                    ? NetworkImage(user.avatarUrl!)
-                    : null,
+                backgroundImage: _buildAvatarImage(user?.avatarUrl),
                 child: user?.avatarUrl == null || user!.avatarUrl!.isEmpty
                     ? const Icon(Icons.person, size: 50, color: Colors.grey)
                     : null,
@@ -245,5 +244,17 @@ class ProfileHeader extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  ImageProvider? _buildAvatarImage(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('data:')) {
+      // base64 data URI — decode and show as memory image
+      final comma = url.indexOf(',');
+      if (comma == -1) return null;
+      final bytes = base64Decode(url.substring(comma + 1));
+      return MemoryImage(bytes);
+    }
+    return NetworkImage(url);
   }
 }

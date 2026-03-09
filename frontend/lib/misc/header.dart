@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -22,6 +23,16 @@ class Header extends ConsumerWidget {
     return DateFormat('EEEE, MMMM dd').format(DateTime.now());
   }
 
+  ImageProvider? _buildAvatarImage(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('data:')) {
+      final comma = url.indexOf(',');
+      if (comma == -1) return null;
+      return MemoryImage(base64Decode(url.substring(comma + 1)));
+    }
+    return NetworkImage(url);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
@@ -41,42 +52,29 @@ class Header extends ConsumerWidget {
                 color: AppColors.cyan.withOpacity(0.2),
                 width: 2,
               ),
-              image: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(user.avatarUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-              color: user?.avatarUrl == null || user!.avatarUrl!.isEmpty
-                  ? AppColors.lightGray
-                  : null,
             ),
-            child: user?.avatarUrl == null || user!.avatarUrl!.isEmpty
-                ? Center(
-                    child: Text(
-                      userName[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.text,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  )
-                : Align(
-                    alignment: Alignment.bottomRight,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.lightGray,
-                          width: 2,
+            child: ClipOval(
+              child: _buildAvatarImage(user?.avatarUrl) != null
+                  ? Image(
+                      key: ValueKey(user?.avatarUrl),
+                      image: _buildAvatarImage(user!.avatarUrl!)!,
+                      fit: BoxFit.cover,
+                      width: 48,
+                      height: 48,
+                    )
+                  : Container(
+                      color: AppColors.lightGray,
+                      alignment: Alignment.center,
+                      child: Text(
+                        userName[0].toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ),
+            ),
           ),
           const SizedBox(width: 12),
           // Greeting Text
