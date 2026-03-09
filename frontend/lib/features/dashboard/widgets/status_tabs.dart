@@ -68,7 +68,7 @@ class StatusTabs extends ConsumerWidget {
                 ),
               ),
               Text(
-                '\ total',
+                '${tasks.length} total',
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.subText,
@@ -90,7 +90,7 @@ class StatusTabs extends ConsumerWidget {
               final tab = _tabs[index];
               final status = tab['status'] as String;
               final isSelected = selectedStatus == status;
-              final count = countFor(status);
+              // final count = countFor(status);
               final activeColor = tab['activeColor'] as Color;
               final activeBg = tab['activeColorCard'] as Color;
 
@@ -141,7 +141,7 @@ class StatusTabs extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '\\',
+                          '${countFor(status)}',
                           style: TextStyle(
                             color: activeColor,
                             fontSize: 11,

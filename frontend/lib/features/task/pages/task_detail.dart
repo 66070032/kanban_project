@@ -345,25 +345,16 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
 
   Future<void> _handleUpdateTask() async {
     setState(() => _isLoading = true);
-    print('DEBUG: Starting task update...');
 
     try {
       // First, upload voice instruction if it exists
       if (_voiceInstructionPath != null &&
           _voiceInstructionPath != widget.task.voiceInstructionUrl) {
-        print('DEBUG: Voice path detected: $_voiceInstructionPath');
-        print('DEBUG: Original voice: ${widget.task.voiceInstructionUrl}');
-        print('DEBUG: Uploading voice...');
         await ref
             .read(tasksProvider.notifier)
             .uploadVoiceInstruction(widget.task.id, _voiceInstructionPath!);
-        print('DEBUG: Voice upload complete!');
-      } else {
-        print('DEBUG: No new voice to upload');
       }
 
-      // Then, update task metadata
-      print('DEBUG: Updating task metadata...');
       final updates = {
         'title': widget.task.title,
         'description': widget.task.description ?? '',
@@ -374,8 +365,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
       final success = await ref
           .read(tasksProvider.notifier)
           .updateTask(widget.task.id, updates);
-
-      print('DEBUG: Task update success: $success');
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -399,7 +388,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
         );
       }
     } catch (e) {
-      print('DEBUG: Error during update: $e');
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
