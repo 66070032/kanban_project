@@ -12,7 +12,7 @@ exports.createGroup = async (req, res) => {
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO groups (name, description, created_by)
+      `INSERT INTO "groups" (name, description, created_by)
        VALUES ($1, $2, $3)
        RETURNING *`,
       [name, description || null, created_by],
@@ -56,7 +56,7 @@ exports.getUserGroups = async (req, res) => {
               WHERE m.group_id = g.id
               ORDER BY m.created_at DESC
               LIMIT 1) as last_message
-       FROM groups g
+       FROM "groups" g
        JOIN group_members gm ON g.id = gm.group_id AND gm.user_id = $1
        LEFT JOIN users u ON g.created_by = u.id
        ORDER BY g.created_at DESC`,
@@ -78,7 +78,7 @@ exports.getGroupById = async (req, res) => {
     const { rows } = await pool.query(
       `SELECT g.*, u.display_name as creator_name,
               (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
-       FROM groups g
+       FROM "groups" g
        LEFT JOIN users u ON g.created_by = u.id
        WHERE g.id = $1`,
       [id],
@@ -102,7 +102,7 @@ exports.updateGroup = async (req, res) => {
     const { name, description } = req.body;
 
     const { rows } = await pool.query(
-      `UPDATE groups SET name = COALESCE($1, name), description = COALESCE($2, description)
+      `UPDATE "groups" SET name = COALESCE($1, name), description = COALESCE($2, description)
        WHERE id = $3 RETURNING *`,
       [name, description, id],
     );
@@ -123,7 +123,7 @@ exports.deleteGroup = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { rowCount } = await pool.query(`DELETE FROM groups WHERE id = $1`, [
+    const { rowCount } = await pool.query(`DELETE FROM "groups" WHERE id = $1`, [
       id,
     ]);
 
