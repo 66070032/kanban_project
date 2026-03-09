@@ -41,9 +41,10 @@ exports.login = async (req, res) => {
 // REGISTER
 //
 exports.register = async (req, res) => {
-  const { email, display_name, password } = req.body;
+  const { email, display_name, displayName, password } = req.body;
+  const name = display_name || displayName;
 
-  if (!email || !display_name || !password) {
+  if (!email || !name || !password) {
     return res
       .status(400)
       .json({ message: "Email, display name, and password are required" });
@@ -56,7 +57,7 @@ exports.register = async (req, res) => {
       `INSERT INTO users (email, display_name, password)
        VALUES ($1, $2, $3)
        RETURNING id, email, display_name, avatar_url, created_at`,
-      [email, display_name, passwordHash],
+      [email, name, passwordHash],
     );
 
     res.status(201).json({ user: rows[0] });
