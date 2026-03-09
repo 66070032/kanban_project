@@ -305,12 +305,12 @@ exports.sendTaskMessage = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // Create the task
+    // Create the task (linked to this group)
     const taskResult = await client.query(
-      `INSERT INTO tasks (title, description, assignee_id, status, due_at)
-       VALUES ($1, $2, $3, 'todo', $4)
+      `INSERT INTO tasks (title, description, assignee_id, status, due_at, group_id)
+       VALUES ($1, $2, $3, 'todo', $4, $5)
        RETURNING *`,
-      [title, description || null, assignee_id || null, due_at || null],
+      [title, description || null, assignee_id || null, due_at || null, id],
     );
 
     const task = taskResult.rows[0];

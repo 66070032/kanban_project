@@ -23,9 +23,11 @@ exports.createTask = async (req, res) => {
 exports.getTasks = async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT t.*, u.display_name as assignee_name 
+      SELECT t.*, u.display_name as assignee_name,
+             g.name as group_name
       FROM tasks t 
-      LEFT JOIN users u ON t.assignee_id = u.id 
+      LEFT JOIN users u ON t.assignee_id = u.id
+      LEFT JOIN "groups" g ON t.group_id = g.id
       ORDER BY t.created_at DESC
     `);
 
@@ -43,13 +45,40 @@ exports.getTasksByAssignee = async (req, res) => {
 
     const { rows } = await pool.query(
       `
-      SELECT t.*, u.display_name as assignee_name 
+      SELECT t.*, u.display_name as assignee_name,
+             g.name as group_name
       FROM tasks t 
-      LEFT JOIN users u ON t.assignee_id = u.id 
+      LEFT JOIN users u ON t.assignee_id = u.id
+      LEFT JOIN "groups" g ON t.group_id = g.id
       WHERE t.assignee_id = $1
       ORDER BY t.created_at DESC
     `,
       [assignee_id],
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ดึง Tasks ตาม group
+exports.getTasksByGroup = async (req, res) => {
+  try {
+    const { group_id } = req.params;
+
+    const { rows } = await pool.query(
+      `
+      SELECT t.*, u.display_name as assignee_name,
+             g.name as group_name
+      FROM tasks t 
+      LEFT JOIN users u ON t.assignee_id = u.id
+      LEFT JOIN "groups" g ON t.group_id = g.id
+      WHERE t.group_id = $1
+      ORDER BY t.created_at DESC
+    `,
+      [group_id],
     );
 
     res.json(rows);
@@ -91,9 +120,15 @@ exports.getTaskById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { rows } = await pool.query(`SELECT * FROM tasks WHERE id = $1`, [
-      id,
-    ]);
+    const { rows } = await pool.query(
+      `SELECT t.*, u.display_name as assignee_name,
+              g.name as group_name
+       FROM tasks t
+       LEFT JOIN users u ON t.assignee_id = u.id
+       LEFT JOIN "groups" g ON t.group_id = g.id
+       WHERE t.id = $1`,
+      [id],
+    );
 
     if (rows.length === 0)
       return res.status(404).json({ message: "Task not found" });
