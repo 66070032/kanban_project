@@ -121,3 +121,62 @@ exports.deleteTask = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Upload voice instruction
+exports.uploadVoiceInstruction = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No voice file provided" });
+    }
+
+    const voiceFileName = req.file.filename;
+
+    const { rows } = await pool.query(
+      `UPDATE tasks
+       SET voice_instruction_uuid=$1,
+           updated_at=NOW()
+       WHERE id=$2
+       RETURNING *`,
+      [voiceFileName, id],
+    );
+
+    if (rows.length === 0)
+      return res.status(404).json({ message: "Task not found" });
+
+    res.json({
+      message: "Voice instruction uploaded successfully",
+      task: rows[0],
+      voice_instruction_url: `/uploads/${voiceFileName}`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Download voice instruction
+exports.getVoiceInstruction = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { rows } = await pool.query(
+      `SELECT voice_instruction_uuid FROM tasks WHERE id = $1`,
+      [id],
+    );
+
+    if (rows.length === 0)
+      return res.status(404).json({ message: "Task not found" });
+
+    const voiceFile = rows[0].voice_instruction_uuid;
+    if (!voiceFile) {
+      return res.status(404).json({ message: "No voice instruction found" });
+    }
+
+    res.json({
+      voice_instruction_url: `/uploads/${voiceFile}`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

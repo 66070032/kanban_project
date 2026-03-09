@@ -9,13 +9,20 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/task_provider.dart';
 import '../../task/pages/task_screen.dart';
 
-class DashboardPage extends ConsumerWidget {
+class DashboardPage extends ConsumerStatefulWidget {
   const DashboardPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends ConsumerState<DashboardPage> {
+  String _selectedStatus = 'todo';
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey[50],
+      color: AppColors.lightGray,
       child: SafeArea(
         child: Stack(
           children: [
@@ -33,45 +40,43 @@ class DashboardPage extends ConsumerWidget {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.only(bottom: 100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Header(),
-                    SizedBox(height: 24),
-                    StatusTabs(),
-                    SizedBox(height: 24),
-                    UpcomingTasksList(),
-                    SizedBox(height: 24),
-                    // StatsGrid(),
-                    SizedBox(height: 80),
+                  children: [
+                    const Header(),
+                    const SizedBox(height: 8),
+                    StatusTabs(
+                      selectedStatus: _selectedStatus,
+                      onStatusChanged: (status) {
+                        setState(() => _selectedStatus = status);
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    UpcomingTasksList(statusFilter: _selectedStatus),
+                    const SizedBox(height: 80),
                   ],
                 ),
               ),
             ),
             Positioned(
-              bottom: 24,
-              right: 24,
-              child: SizedBox(
-                width: 64,
-                height: 64,
-                child: FloatingActionButton(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const TaskScreen()),
-                    );
-                    // Refresh task list after returning
-                    final user = ref.read(authProvider);
-                    if (user != null) {
-                      ref.invalidate(userTasksProvider(user.id));
-                    }
-                  },
-                  backgroundColor: Colors.cyan,
-                  elevation: 8,
-                  shape: const CircleBorder(),
-                  child: const Icon(Icons.add, color: Colors.white, size: 32),
-                ),
+              bottom: 16,
+              right: 20,
+              child: FloatingActionButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const TaskScreen()),
+                  );
+                  final user = ref.read(authProvider);
+                  if (user != null) {
+                    ref.invalidate(userTasksProvider(user.id));
+                  }
+                },
+                backgroundColor: AppColors.cyan,
+                elevation: 6,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
               ),
             ),
           ],

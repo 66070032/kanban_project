@@ -186,6 +186,15 @@ class TasksNotifier extends AsyncNotifier<List<Task>> {
       return false;
     }
   }
+
+  Future<bool> uploadVoiceInstruction(int taskId, String filePath) async {
+    try {
+      await TaskService.uploadVoiceInstruction(taskId, filePath);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 }
 
 final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<Task>>(

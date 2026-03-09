@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -6,9 +6,33 @@ import '../../../providers/auth_provider.dart';
 import '../../../providers/task_provider.dart';
 import '../../../models/task_model.dart';
 import '../../task/pages/task_detail.dart';
+import '../../task/pages/task_screen.dart';
 
 class UpcomingTasksList extends ConsumerWidget {
-  const UpcomingTasksList({super.key});
+  final String statusFilter;
+
+  const UpcomingTasksList({super.key, this.statusFilter = 'todo'});
+
+  static const _statusMeta = {
+    'todo': {
+      'label': 'To Do',
+      'color': AppColors.redTagText,
+      'bg': AppColors.redTagBg,
+      'icon': Icons.radio_button_unchecked,
+    },
+    'doing': {
+      'label': 'In Progress',
+      'color': AppColors.blueTagText,
+      'bg': AppColors.blueTagBg,
+      'icon': Icons.autorenew_rounded,
+    },
+    'done': {
+      'label': 'Done',
+      'color': AppColors.greenTagText,
+      'bg': AppColors.greenTagBg,
+      'icon': Icons.check_circle_outline_rounded,
+    },
+  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -16,47 +40,19 @@ class UpcomingTasksList extends ConsumerWidget {
 
     final tasksAsync = user != null
         ? ref.watch(userTasksProvider(user.id))
-        : const AsyncValue.loading();
+        : const AsyncValue<List<Task>>.loading();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Upcoming Tasks",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.text,
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const _AllTasksPage()),
-                ),
-                child: const Text(
-                  "See All",
-                  style: TextStyle(
-                    color: AppColors.cyan,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
           if (user == null)
             const Center(
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(40.0),
                 child: Text(
-                  "Please log in to view tasks.",
+                  'Please log in to view tasks.',
                   style: TextStyle(color: AppColors.subText),
                 ),
               ),
@@ -69,42 +65,46 @@ class UpcomingTasksList extends ConsumerWidget {
                   child: CircularProgressIndicator(color: AppColors.cyan),
                 ),
               ),
-              error: (error, stackTrace) => _buildEmptyState(),
-              data: (tasks) {
-                if (tasks.isEmpty) {
-                  return _buildEmptyState();
+              error: (_, __) => _buildEmptyState(statusFilter),
+              data: (allTasks) {
+                // Filter by current status tab
+                final filtered = allTasks
+                    .where((t) => (t.status ?? 'todo') == statusFilter)
+                    .toList();
+
+                // Sort: tasks with due dates first (soonest first), then no due date
+                filtered.sort((a, b) {
+                  if (a.dueAt != null && b.dueAt != null) {
+                    return a.dueAt!.compareTo(b.dueAt!);
+                  } else if (a.dueAt != null) {
+                    return -1;
+                  } else if (b.dueAt != null) {
+                    return 1;
+                  }
+                  return a.id.compareTo(b.id);
+                });
+
+                if (filtered.isEmpty) {
+                  return _buildEmptyState(statusFilter);
                 }
 
-                final displayTasks = tasks.take(3).toList();
-
                 return Column(
-                  children: displayTasks.map<Widget>((task) {
-                    final title = task.title;
-                    final description = task.description ?? '';
-                    final status = task.status ?? 'todo';
-                    final dueAt = task.dueAt;
-
+                  children: filtered.map<Widget>((task) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => TaskDetailPage(task: task),
-                          ),
-                        ),
-                        child: TaskCard(
-                          tagLabel: _formatStatus(status),
-                          tagColor: _getTagColor(status),
-                          tagTextColor: _getTagTextColor(status),
-                          timeLabel: _formatDate(dueAt),
-                          title: title,
-                          subtitle: description,
-                          groupImage:
-                              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(title)}&background=random&format=png',
-                          duration: 'N/A',
-                          showWaveform: false,
-                        ),
+                      padding: const EdgeInsets.only(bottom: 14.0),
+                      child: _TaskCard(
+                        task: task,
+                        onTap: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TaskDetailPage(task: task),
+                            ),
+                          );
+                          if (user != null) {
+                            ref.invalidate(userTasksProvider(user.id));
+                          }
+                        },
                       ),
                     );
                   }).toList(),
@@ -116,26 +116,273 @@ class UpcomingTasksList extends ConsumerWidget {
     );
   }
 
-  // --- Helper Methods ---
+  Widget _buildEmptyState(String status) {
+    final meta = _statusMeta[status];
+    final color = meta?['color'] as Color? ?? AppColors.cyan;
+    final icon = meta?['icon'] as IconData? ?? Icons.task_alt;
+    final label = meta?['label'] as String? ?? status;
 
-  Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+        padding: const EdgeInsets.symmetric(vertical: 48.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.celebration, size: 56, color: AppColors.cyan),
-            SizedBox(height: 16),
-            Text(
-              "Yay! You got no tasks anymore, cheers! ๐",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.subText,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                height: 1.5,
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
               ),
+              child: Icon(icon, size: 36, color: color),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No "$label" tasks',
+              style: const TextStyle(
+                color: AppColors.text,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Tap + to add a new task',
+              style: TextStyle(color: AppColors.subText, fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+//  Task Card
+
+class _TaskCard extends StatelessWidget {
+  final Task task;
+  final VoidCallback onTap;
+
+  const _TaskCard({required this.task, required this.onTap});
+
+  static const _statusMeta = {
+    'todo': {
+      'label': 'To Do',
+      'color': AppColors.redTagText,
+      'bg': AppColors.redTagBg,
+    },
+    'doing': {
+      'label': 'In Progress',
+      'color': AppColors.blueTagText,
+      'bg': AppColors.blueTagBg,
+    },
+    'done': {
+      'label': 'Done',
+      'color': AppColors.greenTagText,
+      'bg': AppColors.greenTagBg,
+    },
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final status = task.status ?? 'todo';
+    final meta = _statusMeta[status] ?? _statusMeta['todo']!;
+    final statusColor = meta['color'] as Color;
+    final statusBg = meta['bg'] as Color;
+    final statusLabel = meta['label'] as String;
+
+    final bool isOverdue =
+        task.dueAt != null &&
+        task.dueAt!.isBefore(DateTime.now()) &&
+        status != 'done';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.07),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row: status badge + time badge
+            Row(
+              children: [
+                // Status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        statusLabel,
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                // Due date badge
+                if (task.dueAt != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isOverdue
+                          ? const Color(0xFFFFEEEE)
+                          : const Color(0xFFF0F4FF),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 12,
+                          color: isOverdue ? Colors.red : AppColors.subText,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(task.dueAt),
+                          style: TextStyle(
+                            color: isOverdue ? Colors.red : AppColors.subText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF6F7F8),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'No Due Date',
+                      style: TextStyle(
+                        color: AppColors.subText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Title
+            Text(
+              task.title,
+              style: TextStyle(
+                color: status == 'done' ? AppColors.subText : AppColors.text,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                decoration: status == 'done'
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+                decorationColor: AppColors.subText,
+              ),
+            ),
+
+            // Description
+            if ((task.description ?? '').isNotEmpty) ...[
+              const SizedBox(height: 5),
+              Text(
+                task.description!,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppColors.subText,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 14),
+
+            // Bottom row: avatar initials + arrow
+            Row(
+              children: [
+                // Avatar initial circle
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    task.title.isNotEmpty ? task.title[0].toUpperCase() : '?',
+                    style: TextStyle(
+                      color: statusColor,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Personal',
+                  style: TextStyle(
+                    color: AppColors.subText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: statusColor,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -143,262 +390,42 @@ class UpcomingTasksList extends ConsumerWidget {
     );
   }
 
-  String _formatStatus(String status) {
-    if (status.isEmpty) return "TODO";
-    return status.replaceAll('_', ' ').toUpperCase();
-  }
-
-  Color _getTagColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'done':
-        return Colors.green.withValues(alpha: 0.15);
-      case 'doing':
-      case 'in_progress':
-        return Colors.orange.withValues(alpha: 0.15);
-      default:
-        return AppColors.redTagBg;
-    }
-  }
-
-  Color _getTagTextColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'done':
-        return Colors.green;
-      case 'doing':
-      case 'in_progress':
-        return Colors.orange;
-      default:
-        return AppColors.redTagText;
-    }
-  }
-
   String _formatDate(DateTime? date) {
-    if (date == null) return "No Due Date";
+    if (date == null) return 'No Due Date';
 
     final now = DateTime.now();
-    final isToday =
-        date.year == now.year && date.month == now.month && date.day == now.day;
-    final isTomorrow =
-        date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day + 1;
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateOnly = DateTime(date.year, date.month, date.day);
 
     int hour = date.hour;
-    String period = "AM";
-    if (hour >= 12) {
-      period = "PM";
-      if (hour > 12) hour -= 12;
-    }
+    final period = hour >= 12 ? 'PM' : 'AM';
+    if (hour > 12) hour -= 12;
     if (hour == 0) hour = 12;
+    final timeStr = '$hour:${date.minute.toString().padLeft(2, '0')} $period';
 
-    final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $period";
+    if (dateOnly == today) return 'Today  $timeStr';
+    if (dateOnly == tomorrow) return 'Tomorrow  $timeStr';
 
-    if (isToday) return "Today โ€ข $timeStr";
-    if (isTomorrow) return "Tomorrow โ€ข $timeStr";
-
-    return "${date.day}/${date.month}/${date.year} โ€ข $timeStr";
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}  $timeStr';
   }
 }
 
-class TaskCard extends StatelessWidget {
-  final String tagLabel;
-  final Color tagColor;
-  final Color tagTextColor;
-  final String timeLabel;
-  final String title;
-  final String subtitle;
-  final String? groupImage;
-  final String duration;
-  final bool showWaveform;
-
-  const TaskCard({
-    super.key,
-    required this.tagLabel,
-    required this.tagColor,
-    required this.tagTextColor,
-    required this.timeLabel,
-    required this.title,
-    required this.subtitle,
-    this.groupImage,
-    required this.duration,
-    required this.showWaveform,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.cardShadow,
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: tagColor,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: tagTextColor,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                tagLabel,
-                                style: TextStyle(
-                                  color: tagTextColor,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: AppColors.text,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    // Displaying your dynamic subtitle!
-                    if (subtitle.isNotEmpty) ...[
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.subText,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-                    Text(
-                      timeLabel,
-
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.subText,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: groupImage != null && groupImage!.isNotEmpty
-                    ? NetworkImage(groupImage!)
-                    : null,
-                child: groupImage == null || groupImage!.isEmpty
-                    ? Text(
-                        title.isNotEmpty ? title[0].toUpperCase() : '?',
-                        style: const TextStyle(fontSize: 14),
-                      )
-                    : null,
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (showWaveform)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    _buildWaveBar(8),
-                    _buildWaveBar(12),
-                    _buildWaveBar(16),
-                    _buildWaveBar(8),
-                    _buildWaveBar(12),
-                    const SizedBox(width: 6),
-                    Text(
-                      duration,
-                      style: const TextStyle(
-                        color: AppColors.cyan,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.graphic_eq,
-                      color: AppColors.subText,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      duration,
-                      style: const TextStyle(
-                        color: AppColors.subText,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWaveBar(double height) {
-    return Container(
-      width: 4,
-      height: height,
-      margin: const EdgeInsets.symmetric(horizontal: 1),
-      decoration: const BoxDecoration(
-        color: AppColors.cyan,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(2)),
-      ),
-    );
-  }
-}
-
-// โ”€โ”€โ”€ All Tasks Page โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+//  All Tasks Page (See All)
 
 class _AllTasksPage extends ConsumerWidget {
   const _AllTasksPage();
@@ -408,92 +435,69 @@ class _AllTasksPage extends ConsumerWidget {
     final user = ref.watch(authProvider);
     final tasksAsync = user != null
         ? ref.watch(userTasksProvider(user.id))
-        : const AsyncValue<List<Task>>.loading();
+        : const AsyncValue<List<Task>>.data([]);
 
     return Scaffold(
-      backgroundColor: AppColors.lightGray,
+      backgroundColor: const Color(0xFFF0F4FF),
       appBar: AppBar(
         title: const Text('All Tasks'),
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        foregroundColor: AppColors.text,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            color: AppColors.cyan,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TaskScreen()),
+            ),
+          ),
+        ],
       ),
       body: tasksAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppColors.cyan),
         ),
-        error: (e, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 12),
-                Text('Failed to load tasks: $e', textAlign: TextAlign.center),
-              ],
-            ),
-          ),
-        ),
+        error: (_, __) => const Center(child: Text('Failed to load tasks.')),
         data: (tasks) {
           if (tasks.isEmpty) {
             return const Center(
               child: Text(
-                'No tasks yet. Tap + to create one!',
+                'No tasks yet. Tap + to add one!',
                 style: TextStyle(color: AppColors.subText),
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: tasks.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final task = tasks[index];
-              return GestureDetector(
+          final sorted = [...tasks]
+            ..sort((a, b) {
+              if (a.dueAt != null && b.dueAt != null) {
+                return a.dueAt!.compareTo(b.dueAt!);
+              } else if (a.dueAt != null) {
+                return -1;
+              } else if (b.dueAt != null) {
+                return 1;
+              }
+              return a.id.compareTo(b.id);
+            });
+          return ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: sorted.length,
+            itemBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _TaskCard(
+                task: sorted[index],
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
+                  MaterialPageRoute(
+                    builder: (_) => TaskDetailPage(task: sorted[index]),
+                  ),
                 ),
-                child: TaskCard(
-                  tagLabel: task.status?.toUpperCase() ?? 'TODO',
-                  tagColor: _getTagColor(task.status ?? 'todo'),
-                  tagTextColor: _getTagTextColor(task.status ?? 'todo'),
-                  timeLabel: task.dueAt != null
-                      ? '${task.dueAt!.day}/${task.dueAt!.month}/${task.dueAt!.year}'
-                      : 'No Due Date',
-                  title: task.title,
-                  subtitle: task.description ?? '',
-                  duration: 'N/A',
-                  showWaveform: false,
-                ),
-              );
-            },
+              ),
+            ),
           );
         },
       ),
     );
-  }
-
-  Color _getTagColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'done':
-        return Colors.green.withValues(alpha: 0.15);
-      case 'doing':
-        return Colors.orange.withValues(alpha: 0.15);
-      default:
-        return AppColors.redTagBg;
-    }
-  }
-
-  Color _getTagTextColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'done':
-        return Colors.green;
-      case 'doing':
-        return Colors.orange;
-      default:
-        return AppColors.redTagText;
-    }
   }
 }

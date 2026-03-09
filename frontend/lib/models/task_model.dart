@@ -7,6 +7,7 @@ class Task {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final DateTime? dueAt;
+  final String? voiceInstructionUrl;
 
   Task({
     required this.id,
@@ -17,6 +18,7 @@ class Task {
     this.createdAt,
     this.updatedAt,
     this.dueAt,
+    this.voiceInstructionUrl,
   });
 
   factory Task.fromJson(Map<String, dynamic> json) {
@@ -32,8 +34,9 @@ class Task {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'])
           : null,
-      dueAt: json['due_at'] != null
-          ? DateTime.parse(json['due_at'])
+      dueAt: json['due_at'] != null ? DateTime.parse(json['due_at']) : null,
+      voiceInstructionUrl: json['voice_instruction_uuid'] != null
+          ? 'http://localhost:3000/uploads/${json['voice_instruction_uuid']}'
           : null,
     );
   }

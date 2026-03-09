@@ -1,131 +1,162 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../models/task_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/task_provider.dart';
 
-class StatusTabs extends ConsumerStatefulWidget {
-  final Function(int index)? onTabChange;
+class StatusTabs extends ConsumerWidget {
+  final String selectedStatus;
+  final ValueChanged<String> onStatusChanged;
 
-  const StatusTabs({super.key, this.onTabChange});
+  const StatusTabs({
+    super.key,
+    required this.selectedStatus,
+    required this.onStatusChanged,
+  });
 
-  @override
-  ConsumerState<StatusTabs> createState() => _StatusTabsState();
-}
-
-class _StatusTabsState extends ConsumerState<StatusTabs> {
-  int _selectedIndex = 0;
-
-  static const List<Map<String, dynamic>> _tabDefs = [
-    {'status': 'todo', 'icon': Icons.radio_button_unchecked},
-    {'status': 'doing', 'icon': Icons.play_circle_outline},
-    {'status': 'done', 'icon': Icons.check_circle_outline},
+  static const List<Map<String, dynamic>> _tabs = [
+    {
+      'status': 'todo',
+      'label': 'To Do',
+      'icon': Icons.radio_button_unchecked,
+      'activeColor': AppColors.redTagText,
+      'activeColorCard': AppColors.redTagBg,
+    },
+    {
+      'status': 'doing',
+      'label': 'In Progress',
+      'icon': Icons.autorenew_rounded,
+      'activeColor': AppColors.blueTagText,
+      'activeColorCard': AppColors.blueTagBg,
+    },
+    {
+      'status': 'done',
+      'label': 'Done',
+      'icon': Icons.check_circle_outline_rounded,
+      'activeColor': AppColors.greenTagText,
+      'activeColorCard': AppColors.greenTagBg,
+    },
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
     final tasksAsync = user != null
         ? ref.watch(userTasksProvider(user.id))
         : const AsyncValue<List<Task>>.data([]);
+    final tasks = tasksAsync.asData?.value ?? [];
 
-    final tasks = (tasksAsync.asData?.value ?? []);
+    int countFor(String s) =>
+        tasks.where((t) => (t.status ?? 'todo') == s).length;
 
-    int countFor(String status) =>
-        tasks.where((t) => (t.status ?? 'todo') == status).length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'My Tasks',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              Text(
+                '\ total',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.subText,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: _tabs.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (context, index) {
+              final tab = _tabs[index];
+              final status = tab['status'] as String;
+              final isSelected = selectedStatus == status;
+              final count = countFor(status);
+              final activeColor = tab['activeColor'] as Color;
+              final activeBg = tab['activeColorCard'] as Color;
 
-    final labels = [
-      'Todo (${countFor('todo')})',
-      'Doing (${countFor('doing')})',
-      'Done (${countFor('done')})',
-    ];
-
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _tabDefs.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final bool isSelected = _selectedIndex == index;
-
-          return GestureDetector(
-            onTap: () {
-              setState(() => _selectedIndex = index);
-              widget.onTabChange?.call(index);
+              return GestureDetector(
+                onTap: () => onStatusChanged(status),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? activeBg : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isSelected
+                            ? activeColor.withValues(alpha: 0.25)
+                            : Colors.black.withValues(alpha: 0.06),
+                        blurRadius: isSelected ? 8 : 4,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        tab['icon'] as IconData,
+                        size: 16,
+                        color: isSelected ? activeColor : AppColors.subText,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        tab['label'] as String,
+                        style: TextStyle(
+                          color: isSelected ? activeColor : AppColors.text,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? activeColor.withValues(alpha: 0.15)
+                              : activeColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '\\',
+                          style: TextStyle(
+                            color: activeColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
-            child: StatusPill(
-              icon: _tabDefs[index]['icon'] as IconData,
-              label: labels[index],
-              isActive: isSelected,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// --- StatusPill (เน€เธซเธกเธทเธญเธเน€เธ”เธดเธก เธเธฃเธฑเธเนเธเน const เธเธดเธ”เธซเธเนเธญเธข) ---
-class StatusPill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-
-  const StatusPill({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.isActive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // เนเธเน AnimatedContainer เน€เธเธทเนเธญเธเธงเธฒเธกเธชเธกเธนเธ—เน€เธงเธฅเธฒเน€เธเธฅเธตเนเธขเธเธชเธต (Optional)
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.cyan : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [
-                const BoxShadow(
-                  color: AppColors.cardShadow,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isActive ? Colors.white : AppColors.subText,
           ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive
-                  ? Colors.white
-                  : AppColors.text.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
