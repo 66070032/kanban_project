@@ -1,23 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/card_decoration.dart';
 import '../widget/feature_card.dart';
 
 class TaskScreen extends StatelessWidget {
   const TaskScreen({super.key});
-
-  BoxDecoration _inputBoxDecoration() {
-    return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 14,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +68,7 @@ class TaskScreen extends StatelessWidget {
                         horizontal: 12,
                         vertical: 20,
                       ),
-                      decoration: _inputBoxDecoration(),
+                      decoration: CardDecorations.inputDecoration(),
                       child: const TextField(
                         decoration: InputDecoration(
                           hintText: "Task Title",
@@ -144,7 +131,7 @@ class TaskScreen extends StatelessWidget {
                   horizontal: 12,
                   vertical: 8,
                 ),
-                decoration: _inputBoxDecoration(),
+                decoration: CardDecorations.inputDecoration(),
                 child: const TextField(
                   maxLines: 3,
                   decoration: InputDecoration(

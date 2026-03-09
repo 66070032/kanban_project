@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF2F5F9),
       ),
-      home: const TaskScreen()
+      home: const AuthGate(),
     );
   }
 }

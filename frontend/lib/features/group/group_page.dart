@@ -37,42 +37,42 @@ class _GroupPageState extends State<GroupPage> {
 
             const SizedBox(height: 12),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: List.generate(_tags.length, (index) {
-                    final bool isSelected = _tagIndex == index;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: ChoiceChip(
-                        label: Text(_tags[index]),
-                        selected: isSelected,
-                        showCheckmark: false,
-                        selectedColor: Colors.cyan,
-                        backgroundColor: Colors.transparent,
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[600],
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        side: isSelected
-                            ? BorderSide.none
-                            : BorderSide(color: Colors.grey.shade300),
-                        onSelected: (val) {
-                          setState(() => _tagIndex = index);
-                        },
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            //   child: SingleChildScrollView(
+            //     scrollDirection: Axis.horizontal,
+            //     child: Row(
+            //       children: List.generate(_tags.length, (index) {
+            //         final bool isSelected = _tagIndex == index;
+            //         return Padding(
+            //           padding: const EdgeInsets.only(right: 8.0),
+            //           child: ChoiceChip(
+            //             label: Text(_tags[index]),
+            //             selected: isSelected,
+            //             showCheckmark: false,
+            //             selectedColor: Colors.cyan,
+            //             backgroundColor: Colors.transparent,
+            //             labelStyle: TextStyle(
+            //               color: isSelected ? Colors.white : Colors.grey[600],
+            //               fontWeight: isSelected
+            //                   ? FontWeight.bold
+            //                   : FontWeight.normal,
+            //             ),
+            //             shape: RoundedRectangleBorder(
+            //               borderRadius: BorderRadius.circular(20),
+            //             ),
+            //             side: isSelected
+            //                 ? BorderSide.none
+            //                 : BorderSide(color: Colors.grey.shade300),
+            //             onSelected: (val) {
+            //               setState(() => _tagIndex = index);
+            //             },
+            //           ),
+            //         );
+            //       }),
+            //     ),
+            //   ),
+            // ),
             const SizedBox(height: 20),
 
             Expanded(

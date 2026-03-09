@@ -1,6 +1,7 @@
 # 📱 Voice-based Task Manager with Smart Notification
 
 ## 📌 Project Overview
+
 โปรเจคนี้เป็นแอพ ที่ออกแบบมาเพื่อแก้ปัญหาการสั่งงานและการเตือนงานที่มักถูกมองข้าม
 
 จุดเด่นของแอพคือการใช้ **เสียงอัดแทนการพิมพ์คำสั่งงาน**  
@@ -13,6 +14,7 @@
 ---
 
 ## 🎯 Problem Statement
+
 - การสั่งงานด้วยข้อความยาวทำให้สื่อสารไม่ชัดเจน
 - Notification แบบตัวอักษรถูกมองข้ามได้ง่าย
 - การทวงงานขาดความรู้สึกและน้ำหนักในการเตือน
@@ -23,6 +25,7 @@
 ---
 
 ## 👥 Target Users
+
 - นักเรียน / นักศึกษาที่ทำงานกลุ่ม
 - กลุ่มเพื่อนหรือทีมขนาดเล็ก (2–6 คน)
 - ผู้ใช้ที่ตอบสนองต่อเสียงของคนรู้จักได้ดีกว่าข้อความ
@@ -32,6 +35,7 @@
 ## 🚀 Features
 
 ### ✅ Core Features (MVP)
+
 - **User Authentication**
   - Login / Register ด้วย Email
 - **Task Management**
@@ -57,6 +61,7 @@
 ---
 
 ### ⭐ Nice-to-have Features
+
 - Room / Group สำหรับทำงานร่วมกัน
 - Repeat Task (รายวัน / รายสัปดาห์)
 - Task History
@@ -67,6 +72,7 @@
 ---
 
 ## 🛠 Tech Stack
+
 - **Frontend:** Flutter
 - **Backend:** Firebase
   - Firebase Authentication
@@ -82,6 +88,7 @@
 ---
 
 ## 🧱 System Architecture (High Level)
+
 - ข้อมูล Task และ User เก็บใน Cloud Firestore
 - ไฟล์เสียงเก็บใน Firebase Storage
 - เมื่อถึงเวลา Due Date ระบบจะใช้ Local Notification
@@ -91,11 +98,14 @@
 ---
 
 ## 📦 Project Scope
+
 **Focus**
+
 - Task Management
 - Voice-based Interaction
 - Smart Notification
 
 **Out of Scope**
+
 - Chat แบบ real-time
 - Social feed

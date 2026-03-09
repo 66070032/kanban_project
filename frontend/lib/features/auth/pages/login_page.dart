@@ -14,6 +14,7 @@ import '../../../models/user_model.dart';
 import '../../profile/pages/profile_pages.dart';
 import '../../group/pages/group_screen.dart';
 import '../../../features/dashboard/widgets/dashboard_screen.dart';
+import '../../../main_wrapper.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -195,7 +196,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ProfilePage()),
+          MaterialPageRoute(builder: (_) => const MainWrapper()),
         );
       } else {
         setState(() {

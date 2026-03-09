@@ -11,42 +11,45 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Header(),
-              SizedBox(height: 24),
-              StatusTabs(),
-              SizedBox(height: 24),
-              UpcomingTasksList(),
-              SizedBox(height: 24),
-              StatsGrid(),
-              SizedBox(
-                height: 80,
+    return Container(
+      color: Colors.grey[50],
+      child: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Header(),
+                  SizedBox(height: 24),
+                  StatusTabs(),
+                  SizedBox(height: 24),
+                  UpcomingTasksList(),
+                  SizedBox(height: 24),
+                  StatsGrid(),
+                  SizedBox(height: 80),
+                ],
               ),
-            ],
-          ),
+            ),
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: SizedBox(
+                width: 64,
+                height: 64,
+                child: FloatingActionButton(
+                  onPressed: () {},
+                  backgroundColor: Colors.cyan,
+                  elevation: 8,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.mic, color: Colors.white, size: 32),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
-
-      floatingActionButton: SizedBox(
-        width: 64,
-        height: 64,
-        child: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: Colors.cyan,
-          elevation: 8,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.mic, color: Colors.white, size: 32),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
