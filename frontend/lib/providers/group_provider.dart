@@ -37,6 +37,7 @@ final groupTasksProvider = FutureProvider.family<List<Task>, int>((
   ref,
   groupId,
 ) async {
+  ref.keepAlive();
   return GroupChatService.getGroupTasks(groupId);
 });
 

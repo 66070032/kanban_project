@@ -798,10 +798,7 @@ class _ChatRoomPageState extends ConsumerState<ChatRoomPage> {
                 children: [
                   const Text(
                     'Group Tasks',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const Spacer(),
                   Consumer(
@@ -1069,8 +1066,7 @@ class _TaskBubble extends ConsumerWidget {
     final titleLine = lines.isNotEmpty
         ? lines[0].replaceFirst(RegExp(r'^📋\s*New Task:\s*'), '')
         : 'Task';
-    final assigneeLine = lines.length > 1 &&
-            lines[1].startsWith('Assigned to:')
+    final assigneeLine = lines.length > 1 && lines[1].startsWith('Assigned to:')
         ? lines[1].replaceFirst('Assigned to: ', '')
         : null;
     final dueLine = lines.length > 2 && lines.last.startsWith('Due:')
@@ -1203,10 +1199,7 @@ class _TaskBubble extends ConsumerWidget {
                 alignment: Alignment.bottomRight,
                 child: Text(
                   _formatTime(message.createdAt),
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: Colors.grey[400], fontSize: 10),
                 ),
               ),
             ),
@@ -1279,9 +1272,21 @@ class _GroupTaskTile extends StatelessWidget {
   const _GroupTaskTile({required this.task, required this.onTap});
 
   static const _statusMeta = {
-    'todo': {'label': 'To Do', 'color': Color(0xFFE53935), 'bg': Color(0xFFFFEEEE)},
-    'doing': {'label': 'In Progress', 'color': Color(0xFF1E88E5), 'bg': Color(0xFFE3F2FD)},
-    'done': {'label': 'Done', 'color': Color(0xFF43A047), 'bg': Color(0xFFE8F5E9)},
+    'todo': {
+      'label': 'To Do',
+      'color': Color(0xFFE53935),
+      'bg': Color(0xFFFFEEEE),
+    },
+    'doing': {
+      'label': 'In Progress',
+      'color': Color(0xFF1E88E5),
+      'bg': Color(0xFFE3F2FD),
+    },
+    'done': {
+      'label': 'Done',
+      'color': Color(0xFF43A047),
+      'bg': Color(0xFFE8F5E9),
+    },
   };
 
   @override
@@ -1326,8 +1331,8 @@ class _GroupTaskTile extends StatelessWidget {
                 status == 'done'
                     ? Icons.check_circle_outline
                     : status == 'doing'
-                        ? Icons.pending_outlined
-                        : Icons.radio_button_unchecked,
+                    ? Icons.pending_outlined
+                    : Icons.radio_button_unchecked,
                 color: meta['color'] as Color,
                 size: 20,
               ),
@@ -1373,7 +1378,11 @@ class _GroupTaskTile extends StatelessWidget {
                       ),
                       if (task.assigneeName != null) ...[
                         const SizedBox(width: 8),
-                        Icon(Icons.person_outline, size: 12, color: Colors.grey[400]),
+                        Icon(
+                          Icons.person_outline,
+                          size: 12,
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(width: 2),
                         Flexible(
                           child: Text(

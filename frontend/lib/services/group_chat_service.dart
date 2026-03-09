@@ -176,13 +176,41 @@ class GroupChatService {
   // ─── Group Tasks ───
 
   static Future<List<Task>> getGroupTasks(int groupId) async {
+    try {
+      // Try dedicated group tasks endpoint first
+      final res = await http
+          .get(Uri.parse('$baseUrl/tasks/group/$groupId'))
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(res.body);
+        return data.map((t) => Task.fromJson(t)).toList();
+      }
+
+      // Fallback: fetch all tasks and filter by group_id
+      if (res.statusCode == 404) {
+        return _getGroupTasksFallback(groupId);
+      }
+
+      throw Exception('Failed to load group tasks: ${res.statusCode}');
+    } catch (e) {
+      if (e.toString().contains('Failed to load group tasks')) rethrow;
+      // Network error / timeout → try fallback
+      return _getGroupTasksFallback(groupId);
+    }
+  }
+
+  static Future<List<Task>> _getGroupTasksFallback(int groupId) async {
     final res = await http
-        .get(Uri.parse('$baseUrl/tasks/group/$groupId'))
-        .timeout(const Duration(seconds: 15));
+        .get(Uri.parse('$baseUrl/tasks'))
+        .timeout(const Duration(seconds: 10));
 
     if (res.statusCode == 200) {
       final List<dynamic> data = jsonDecode(res.body);
-      return data.map((t) => Task.fromJson(t)).toList();
+      return data
+          .where((t) => t['group_id'] == groupId)
+          .map((t) => Task.fromJson(t))
+          .toList();
     } else {
       throw Exception('Failed to load group tasks: ${res.statusCode}');
     }
