@@ -69,7 +69,7 @@ class GroupCard extends StatelessWidget {
               const Spacer(),
               // Title
               Text(
-                group.title,
+                group.name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -78,7 +78,7 @@ class GroupCard extends StatelessWidget {
               const SizedBox(height: 4),
               // Subtitle
               Text(
-                group.subtitle,
+                group.description ?? '',
                 style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
               ),
               const SizedBox(height: 12),
@@ -99,14 +99,13 @@ class GroupCard extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color:
-                            Colors.grey.shade600,
+                        color: Colors.grey.shade600,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        "+${group.memberCount}",
+                        '+${group.memberCount}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -120,7 +119,7 @@ class GroupCard extends StatelessWidget {
             ],
           ),
           // Blue Dot Notification
-          if (group.hasUpdate)
+          if (group.lastMessage != null)
             Positioned(
               top: 0,
               right: 0,

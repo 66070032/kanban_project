@@ -21,17 +21,14 @@ class CustomBottomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          label: "Home",
-        ),
+        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: "Home"),
         BottomNavigationBarItem(
           icon: Icon(Icons.calendar_today_outlined),
           label: "Calendar",
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.people_outline),
-          label: "Groups",
+          icon: Icon(Icons.chat_bubble_outline),
+          label: "Chat",
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outline),

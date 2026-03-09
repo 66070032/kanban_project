@@ -14,10 +14,12 @@ const userRoutes = require("./routes/user.routes");
 const taskRoutes = require("./routes/task.routes");
 const authRoutes = require("./routes/auth.routes");
 const reminderRoutes = require("./routes/reminder.routes");
+const groupRoutes = require("./routes/group.routes");
 app.use("/users", userRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/auth", authRoutes);
 app.use("/reminders", reminderRoutes);
+app.use("/groups", groupRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
