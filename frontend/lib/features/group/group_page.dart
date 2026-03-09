@@ -212,14 +212,17 @@ class GroupPage extends ConsumerWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => ChatRoomPage(
-                          groupId: group.id, groupName: group.name),
+                        groupId: group.id,
+                        groupName: group.name,
+                      ),
                     ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                          'Failed to create group. Check backend connection.'),
+                        'Failed to create group. Check backend connection.',
+                      ),
                       backgroundColor: Colors.red,
                     ),
                   );

@@ -123,9 +123,10 @@ exports.deleteGroup = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { rowCount } = await pool.query(`DELETE FROM "groups" WHERE id = $1`, [
-      id,
-    ]);
+    const { rowCount } = await pool.query(
+      `DELETE FROM "groups" WHERE id = $1`,
+      [id],
+    );
 
     if (rowCount === 0) {
       return res.status(404).json({ message: "Group not found" });

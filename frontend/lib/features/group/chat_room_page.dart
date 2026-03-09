@@ -839,7 +839,7 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 
-  Color _avatarColor(int id) {
+  Color _avatarColor(String id) {
     final colors = [
       Colors.cyan,
       Colors.purple,
@@ -848,7 +848,7 @@ class _ChatBubble extends StatelessWidget {
       Colors.indigo,
       Colors.pink,
     ];
-    return colors[id % colors.length];
+    return colors[id.hashCode.abs() % colors.length];
   }
 }
 

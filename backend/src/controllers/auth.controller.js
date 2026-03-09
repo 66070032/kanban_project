@@ -44,7 +44,11 @@ exports.login = async (req, res) => {
 // REGISTER
 //
 exports.register = async (req, res) => {
-  const { email, displayName, password } = req.body;
+  const { email, display_name, password } = req.body;
+
+  if (!email || !display_name || !password) {
+    return res.status(400).json({ message: 'Email, display name, and password are required' });
+  }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -53,11 +57,14 @@ exports.register = async (req, res) => {
       `INSERT INTO users (email, display_name, password)
        VALUES ($1, $2, $3)
        RETURNING id, email, display_name, avatar_url, created_at`,
-      [email, displayName, passwordHash]
+      [email, display_name, passwordHash]
     );
 
-    res.status(201).json(rows[0]);
+    res.status(201).json({ user: rows[0] });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    if (err.code === '23505') {
+      return res.status(409).json({ message: 'An account with this email already exists' });
+    }
+    res.status(400).json({ message: err.message });
   }
 };

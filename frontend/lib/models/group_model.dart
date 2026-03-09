@@ -2,7 +2,7 @@ class GroupModel {
   final int id;
   final String name;
   final String? description;
-  final int? createdBy;
+  final String? createdBy;
   final String? creatorName;
   final String? userRole;
   final int memberCount;
@@ -26,7 +26,7 @@ class GroupModel {
       id: json['id'],
       name: json['name'] ?? '',
       description: json['description'],
-      createdBy: json['created_by'],
+      createdBy: json['created_by']?.toString(),
       creatorName: json['creator_name'],
       userRole: json['user_role'],
       memberCount: int.tryParse('${json['member_count']}') ?? 0,
@@ -43,7 +43,7 @@ class GroupModel {
 class ChatMessage {
   final int id;
   final int groupId;
-  final int senderId;
+  final String senderId;
   final String senderName;
   final String? senderAvatar;
   final String content;
@@ -67,7 +67,7 @@ class ChatMessage {
     return ChatMessage(
       id: json['id'] ?? 0,
       groupId: json['group_id'] ?? 0,
-      senderId: json['sender_id'] ?? 0,
+      senderId: '${json['sender_id'] ?? ''}',
       senderName: json['sender_name'] ?? 'Unknown',
       senderAvatar: json['sender_avatar'],
       content: json['content'] ?? '',
