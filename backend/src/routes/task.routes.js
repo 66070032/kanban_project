@@ -9,6 +9,9 @@ router.get("/", controller.getTasks);
 // ดึง task ตาม assignee
 router.get("/assignee/:assignee_id", controller.getTasksByAssignee);
 
+// ดึง task ตาม group
+router.get("/group/:group_id", controller.getTasksByGroup);
+
 // Upload voice instruction (MUST BE BEFORE /:id routes)
 router.post(
   "/:id/voice-instruction",

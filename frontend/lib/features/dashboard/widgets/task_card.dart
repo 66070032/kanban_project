@@ -187,32 +187,35 @@ class TaskCard extends StatelessWidget {
   }
 
   Widget _buildBottomRow(Color statusColor) {
+    final isGroup = task.isFromGroup;
     return Row(
       children: [
         Container(
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-            color: statusColor.withValues(alpha: 0.15),
+            color: isGroup
+                ? Colors.cyan.withValues(alpha: 0.15)
+                : statusColor.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Text(
-            task.title.isNotEmpty ? task.title[0].toUpperCase() : '?',
-            style: TextStyle(
-              color: statusColor,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Icon(
+            isGroup ? Icons.chat_bubble_outline : Icons.person_outline,
+            size: 14,
+            color: isGroup ? Colors.cyan : statusColor,
           ),
         ),
         const SizedBox(width: 8),
-        const Text(
-          'Personal',
-          style: TextStyle(
-            color: AppColors.subText,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
+        Expanded(
+          child: Text(
+            task.originLabel,
+            style: TextStyle(
+              color: isGroup ? Colors.cyan : AppColors.subText,
+              fontSize: 12,
+              fontWeight: isGroup ? FontWeight.w600 : FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const Spacer(),

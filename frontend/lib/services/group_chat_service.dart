@@ -2,6 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../core/config/app_config.dart';
 import '../models/group_model.dart';
+import '../models/task_model.dart';
 
 class GroupChatService {
   static String get baseUrl => AppConfig.baseUrl;
@@ -170,5 +171,39 @@ class GroupChatService {
     } else {
       throw Exception('Failed to create task: ${res.statusCode}');
     }
+  }
+
+  // ─── Group Tasks ───
+
+  static Future<List<Task>> getGroupTasks(int groupId) async {
+    // Get task IDs from group messages (task-type messages carry task_id)
+    final messages = await getMessages(groupId, limit: 200);
+    final taskIds = messages
+        .where((m) => m.messageType == 'task' && m.taskId != null)
+        .map((m) => m.taskId!)
+        .toSet();
+
+    if (taskIds.isEmpty) return [];
+
+    // Fetch each task by ID
+    final tasks = <Task>[];
+    for (final taskId in taskIds) {
+      try {
+        final res = await http
+            .get(Uri.parse('$baseUrl/tasks/$taskId'))
+            .timeout(const Duration(seconds: 10));
+        if (res.statusCode == 200) {
+          tasks.add(Task.fromJson(jsonDecode(res.body)));
+        }
+      } catch (_) {
+        // Skip tasks that can't be fetched
+      }
+    }
+
+    // Sort by creation date descending
+    tasks.sort((a, b) => (b.createdAt ?? DateTime(0))
+        .compareTo(a.createdAt ?? DateTime(0)));
+
+    return tasks;
   }
 }

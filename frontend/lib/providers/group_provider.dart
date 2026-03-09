@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/group_model.dart';
+import '../models/task_model.dart';
 import '../services/group_chat_service.dart';
 import 'auth_provider.dart';
 
@@ -28,6 +29,16 @@ final groupMessagesProvider = FutureProvider.family<List<ChatMessage>, int>((
   groupId,
 ) async {
   return GroupChatService.getMessages(groupId);
+});
+
+// ─── Group tasks ───
+
+final groupTasksProvider = FutureProvider.family<List<Task>, int>((
+  ref,
+  groupId,
+) async {
+  ref.keepAlive();
+  return GroupChatService.getGroupTasks(groupId);
 });
 
 // ─── Groups notifier for mutations ───
