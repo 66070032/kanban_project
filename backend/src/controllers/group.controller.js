@@ -30,7 +30,7 @@ exports.createGroup = async (req, res) => {
     res.status(201).json(group);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", detail: err.message });
   }
 };
 
@@ -66,7 +66,7 @@ exports.getUserGroups = async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", detail: err.message });
   }
 };
 
