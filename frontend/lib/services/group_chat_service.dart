@@ -201,8 +201,10 @@ class GroupChatService {
     }
 
     // Sort by creation date descending
-    tasks.sort((a, b) => (b.createdAt ?? DateTime(0))
-        .compareTo(a.createdAt ?? DateTime(0)));
+    tasks.sort(
+      (a, b) =>
+          (b.createdAt ?? DateTime(0)).compareTo(a.createdAt ?? DateTime(0)),
+    );
 
     return tasks;
   }
