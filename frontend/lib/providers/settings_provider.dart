@@ -219,29 +219,29 @@ class SecuritySettingsNotifier extends Notifier<SecuritySettings> {
 // ============= Riverpod Providers =============
 
 final notificationSettingsProvider =
-    NotifierProvider<NotificationSettingsNotifier, NotificationSettings>(() {
-      return NotificationSettingsNotifier();
-    });
+    NotifierProvider<NotificationSettingsNotifier, NotificationSettings>(
+      NotificationSettingsNotifier.new,
+    );
 
 final displaySettingsProvider =
-    NotifierProvider<DisplaySettingsNotifier, DisplaySettings>(() {
-      return DisplaySettingsNotifier();
-    });
+    NotifierProvider<DisplaySettingsNotifier, DisplaySettings>(
+      DisplaySettingsNotifier.new,
+    );
 
 final soundSettingsProvider =
-    NotifierProvider<SoundSettingsNotifier, SoundSettings>(() {
-      return SoundSettingsNotifier();
-    });
+    NotifierProvider<SoundSettingsNotifier, SoundSettings>(
+      SoundSettingsNotifier.new,
+    );
 
 final taskSettingsProvider =
-    NotifierProvider<TaskSettingsNotifier, TaskSettings>(() {
-      return TaskSettingsNotifier();
-    });
+    NotifierProvider<TaskSettingsNotifier, TaskSettings>(
+      TaskSettingsNotifier.new,
+    );
 
 final securitySettingsProvider =
-    NotifierProvider<SecuritySettingsNotifier, SecuritySettings>(() {
-      return SecuritySettingsNotifier();
-    });
+    NotifierProvider<SecuritySettingsNotifier, SecuritySettings>(
+      SecuritySettingsNotifier.new,
+    );
 
 // ============= Combined Settings Provider =============
 

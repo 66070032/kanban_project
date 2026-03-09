@@ -63,7 +63,7 @@ class CustomDivider extends StatelessWidget {
     return Divider(
       height: 1,
       thickness: 1,
-      color: AppColors.lightGray.withOpacity(0.5),
+      color: AppColors.lightGray.withValues(alpha: 0.5),
     );
   }
 }
@@ -149,7 +149,7 @@ class StatCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
+              color: iconColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, color: iconColor, size: 20),
@@ -249,7 +249,7 @@ class ProfileHeader extends StatelessWidget {
   ImageProvider? _buildAvatarImage(String? url) {
     if (url == null || url.isEmpty) return null;
     if (url.startsWith('data:')) {
-      // base64 data URI — decode and show as memory image
+      // base64 data URI โ€” decode and show as memory image
       final comma = url.indexOf(',');
       if (comma == -1) return null;
       final bytes = base64Decode(url.substring(comma + 1));

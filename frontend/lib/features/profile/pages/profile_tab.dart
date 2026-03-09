@@ -590,7 +590,7 @@ class ProfileTab extends ConsumerWidget {
                     icon: Icons.assignment_outlined,
                     iconColor: AppColors.cyan,
                   ),
-                  error: (_, __) => const StatCard(
+                  error: (_, _) => const StatCard(
                     label: 'Tasks Left',
                     value: '0',
                     icon: Icons.assignment_outlined,
@@ -613,7 +613,7 @@ class ProfileTab extends ConsumerWidget {
                     icon: Icons.notifications_outlined,
                     iconColor: Color(0xFFFF9052),
                   ),
-                  error: (_, __) => const StatCard(
+                  error: (_, _) => const StatCard(
                     label: 'Reminders',
                     value: '0',
                     icon: Icons.notifications_outlined,

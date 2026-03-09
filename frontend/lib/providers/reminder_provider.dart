@@ -2,11 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/reminder_model.dart';
-import 'auth_provider.dart';
+import '../core/config/app_config.dart';
+import '../services/notification_service.dart';
 
 /// Reminder Service Provider - Manages reminder API calls
 class ReminderService {
-  static const String baseUrl = 'http://localhost:3000';
+  static String get baseUrl => AppConfig.baseUrl;
 
   /// Get all reminders for user
   static Future<List<Reminder>> getUserReminders(String userId) async {
@@ -127,12 +128,15 @@ class ReminderService {
   }
 }
 
-/// Riverpod Provider for reminders list
+/// Riverpod Provider for reminders list.
+/// Automatically schedules local notifications for upcoming reminders.
 final userRemindersProvider = FutureProvider.family<List<Reminder>, String>((
   ref,
   userId,
 ) async {
-  return ReminderService.getUserReminders(userId);
+  final reminders = await ReminderService.getUserReminders(userId);
+  await NotificationService().scheduleReminders(reminders);
+  return reminders;
 });
 
 /// Riverpod Provider for single reminder

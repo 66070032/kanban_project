@@ -2,12 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/task_model.dart';
-import '../models/user_model.dart';
+import '../core/config/app_config.dart';
 import 'auth_provider.dart';
 
 /// Task Service Provider - Manages task API calls
 class TaskService {
-  static const String baseUrl = 'https://kanban.jokeped.xyz';
+  static String get baseUrl => AppConfig.baseUrl;
 
   static Future<List<Task>> getUserTasks(String userId) async {
     try {
@@ -125,7 +125,7 @@ class TaskService {
   }
 }
 
-/// Riverpod Provider for tasks list
+/// Riverpod Provider for tasks list (read-only fetch)
 final userTasksProvider = FutureProvider.family<List<Task>, String>((
   ref,
   userId,
@@ -141,36 +141,56 @@ final taskDetailProvider = FutureProvider.family<Task, int>((
   return TaskService.getTaskById(taskId);
 });
 
-/// Riverpod Provider for creating task
-final createTaskProvider = FutureProvider.family<Task, Map<String, dynamic>>((
-  ref,
-  taskData,
-) async {
-  return TaskService.createTask(taskData);
-});
+/// TasksNotifier — manages task mutations imperatively (create/update/delete).
+/// Consumers call methods on the notifier; state holds the latest task list.
+class TasksNotifier extends AsyncNotifier<List<Task>> {
+  @override
+  Future<List<Task>> build() async {
+    final user = ref.watch(authProvider);
+    if (user == null) return [];
+    return TaskService.getUserTasks(user.id);
+  }
 
-/// Riverpod Provider for updating task
-final updateTaskProvider =
-    FutureProvider.family<Task, (int, Map<String, dynamic>)>((
-      ref,
-      params,
-    ) async {
-      return TaskService.updateTask(params.$1, params.$2);
-    });
+  Future<bool> createTask(Map<String, dynamic> taskData) async {
+    try {
+      final newTask = await TaskService.createTask(taskData);
+      state = AsyncData([...state.asData?.value ?? [], newTask]);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
-/// Riverpod Provider for deleting task
-final deleteTaskProvider = FutureProvider.family<void, int>((
-  ref,
-  taskId,
-) async {
-  return TaskService.deleteTask(taskId);
-});
+  Future<bool> updateTask(int taskId, Map<String, dynamic> updates) async {
+    try {
+      final updated = await TaskService.updateTask(taskId, updates);
+      state = AsyncData(
+        (state.asData?.value ?? [])
+            .map((t) => t.id == taskId ? updated : t)
+            .toList(),
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
 
-/// Riverpod Provider for uploading voice instruction
-final uploadVoiceInstructionProvider =
-    FutureProvider.family<String, (int, String)>((ref, params) async {
-      return TaskService.uploadVoiceInstruction(params.$1, params.$2);
-    });
+  Future<bool> deleteTask(int taskId) async {
+    try {
+      await TaskService.deleteTask(taskId);
+      state = AsyncData(
+        (state.asData?.value ?? []).where((t) => t.id != taskId).toList(),
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+}
+
+final tasksProvider = AsyncNotifierProvider<TasksNotifier, List<Task>>(
+  TasksNotifier.new,
+);
 
 /// NotifierProvider for task creation form state
 class TaskFormNotifier extends Notifier<Map<String, dynamic>> {

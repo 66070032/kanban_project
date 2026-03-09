@@ -33,7 +33,7 @@ class CardDecorations {
       borderRadius: BorderRadius.circular(borderRadius),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
+          color: Colors.black.withValues(alpha: 0.08),
           blurRadius: 14,
           offset: const Offset(0, 4),
         ),
@@ -51,7 +51,7 @@ class CardDecorations {
       borderRadius: BorderRadius.circular(borderRadius),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.grey.withValues(alpha: 0.2),
           spreadRadius: 2,
           blurRadius: 5,
           offset: const Offset(0, 3),

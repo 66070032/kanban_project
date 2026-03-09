@@ -1,187 +1,140 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz_data;
+import '../models/reminder_model.dart';
 
-/// Notification Service
-/// Handles local notifications and simulated incoming call notifications
+/// Notification Service using flutter_local_notifications
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
-
-  factory NotificationService() {
-    return _instance;
-  }
-
+  factory NotificationService() => _instance;
   NotificationService._internal();
 
-  /// Initialize notification service
-  /// Must be called on app startup
-  Future<void> initialize() async {
-    try {
-      // Implementation with flutter_local_notifications:
-      // final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-      // await flutterLocalNotificationsPlugin.initialize(
-      //   InitializationSettings(
-      //     android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      //     iOS: DarwinInitializationSettings(),
-      //   ),
-      // );
+  final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
 
-      if (kDebugMode) {
-        print('Notification service initialized');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Notification initialization error: $e');
-      }
-    }
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    'kanban_reminders',
+    'Task Reminders',
+    description: 'Notifications for task reminders and due dates',
+    importance: Importance.high,
+    playSound: true,
+  );
+
+  // Set this callback in main.dart to handle notification taps
+  static void Function(String? payload)? onNotificationTap;
+
+  Future<void> initialize() async {
+    tz_data.initializeTimeZones();
+
+    const initSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      ),
+    );
+
+    await _plugin.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: (response) {
+        onNotificationTap?.call(response.payload);
+      },
+    );
+
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_channel);
   }
 
-  /// Show simple text notification
+  Future<bool> requestPermissions() async {
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    return await android?.requestNotificationsPermission() ?? false;
+  }
+
   Future<void> showNotification({
     required int id,
     required String title,
     required String body,
     String? payload,
   }) async {
-    try {
-      // Implementation:
-      // await flutterLocalNotificationsPlugin.show(
-      //   id,
-      //   title,
-      //   body,
-      //   NotificationDetails(
-      //     android: AndroidNotificationDetails(
-      //       'kanban_channel',
-      //       'Task Reminders',
-      //       channelDescription: 'Notifications for task reminders',
-      //     ),
-      //   ),
-      //   payload: payload,
-      // );
-
-      if (kDebugMode) {
-        print('Notification shown: $title - $body');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error showing notification: $e');
-      }
-    }
+    await _plugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: payload,
+    );
   }
 
-  /// Show notification with sound at scheduled time
   Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime scheduledTime,
-    String? soundPath,
     String? payload,
   }) async {
-    try {
-      // Implementation with flutter_local_notifications:
-      // await flutterLocalNotificationsPlugin.zonedSchedule(
-      //   id,
-      //   title,
-      //   body,
-      //   tz.TZDateTime.from(scheduledTime, tz.local),
-      //   NotificationDetails(
-      //     android: AndroidNotificationDetails(
-      //       'kanban_channel',
-      //       'Task Reminders',
-      //       sound: RawResourceAndroidNotificationSound(soundPath),
-      //       playSound: true,
-      //     ),
-      //   ),
-      //   uiLocalNotificationDateInterpretation:
-      //     UILocalNotificationDateInterpretation.absoluteTime,
-      //   payload: payload,
-      // );
+    await _plugin.zonedSchedule(
+      id: id,
+      scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          channelDescription: _channel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      title: title,
+      body: body,
+      payload: payload,
+    );
+  }
 
-      if (kDebugMode) {
-        print('Notification scheduled for: $scheduledTime');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error scheduling notification: $e');
-      }
+  /// Schedule a notification for each pending reminder.
+  Future<void> scheduleReminders(List<Reminder> reminders) async {
+    final now = DateTime.now();
+    for (final reminder in reminders) {
+      if (reminder.isCompleted || reminder.isSent) continue;
+      if (reminder.dueDate.isBefore(now)) continue;
+      await scheduleNotification(
+        id: reminder.id.hashCode.abs() % 100000,
+        title: ' Reminder: ${reminder.title}',
+        body: reminder.description ?? 'You have a task reminder!',
+        scheduledTime: reminder.dueDate,
+        payload: reminder.title,
+      );
     }
   }
 
-  /// Show incoming call notification
-  /// This displays a call-like UI overlay
-  Future<void> showIncomingCallNotification({
-    required String callerId,
-    required String callerName,
-    required String callerAvatarUrl,
-    required Function onAccept,
-    required Function onReject,
-  }) async {
-    try {
-      // Implementation with flutter_callkit_incoming:
-      // await FlutterCallkitIncoming.displayIncomingCall(
-      //   uuid: UUID().v4(),
-      //   nameCaller: callerName,
-      //   appName: 'Kanban Task Manager',
-      // );
+  Future<void> cancelNotification(int id) async => _plugin.cancel(id: id);
 
-      if (kDebugMode) {
-        print('Incoming call notification from: $callerName');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error showing incoming call: $e');
-      }
-    }
-  }
-
-  /// Cancel notification
-  Future<void> cancelNotification(int id) async {
-    try {
-      // Implementation:
-      // await flutterLocalNotificationsPlugin.cancel(id);
-
-      if (kDebugMode) {
-        print('Notification $id cancelled');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error cancelling notification: $e');
-      }
-    }
-  }
-
-  /// Cancel all notifications
-  Future<void> cancelAllNotifications() async {
-    try {
-      // Implementation:
-      // await flutterLocalNotificationsPlugin.cancelAll();
-
-      if (kDebugMode) {
-        print('All notifications cancelled');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error cancelling all notifications: $e');
-      }
-    }
-  }
-
-  /// Check if app has notification permission
-  Future<bool> hasNotificationPermission() async {
-    try {
-      // Check permission using permission_handler
-      return true; // Placeholder
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Request notification permission
-  Future<bool> requestNotificationPermission() async {
-    try {
-      // Request using permission_handler
-      return true; // Placeholder
-    } catch (e) {
-      return false;
-    }
-  }
+  Future<void> cancelAll() async => _plugin.cancelAll();
 }

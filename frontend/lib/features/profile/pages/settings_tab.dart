@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' hide DropdownMenuItem;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/index.dart';
 import '../../../providers/settings_provider.dart';
 

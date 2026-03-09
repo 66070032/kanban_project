@@ -14,7 +14,7 @@ class StatsGrid extends StatelessWidget {
             child: _buildStatCard(
               icon: Icons.trending_up,
               iconColor: AppColors.cyan,
-              iconBg: AppColors.cyan.withOpacity(0.1),
+              iconBg: AppColors.cyan.withValues(alpha: 0.1),
               value: "85%",
               label: "Completion Rate",
             ),
@@ -24,7 +24,7 @@ class StatsGrid extends StatelessWidget {
             child: _buildStatCard(
               icon: Icons.schedule,
               iconColor: AppColors.purpleTagText,
-              iconBg: AppColors.purpleTagText.withOpacity(0.1),
+              iconBg: AppColors.purpleTagText.withValues(alpha: 0.1),
               value: "12",
               label: "Tasks Pending",
             ),

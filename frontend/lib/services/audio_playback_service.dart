@@ -1,157 +1,57 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:just_audio/just_audio.dart';
 
 enum PlaybackState { idle, playing, paused, stopped }
 
-/// Audio Playback Service
-/// Handles voice playback with playback state management
+/// Audio Playback Service using the `just_audio` package.
 class AudioPlaybackService {
   static final AudioPlaybackService _instance =
       AudioPlaybackService._internal();
-
-  factory AudioPlaybackService() {
-    return _instance;
-  }
-
+  factory AudioPlaybackService() => _instance;
   AudioPlaybackService._internal();
 
+  final AudioPlayer _player = AudioPlayer();
+
   PlaybackState _playbackState = PlaybackState.idle;
-  Duration _currentPosition = Duration.zero;
-  Duration _duration = Duration.zero;
   String? _currentFilePath;
 
   PlaybackState get playbackState => _playbackState;
-  Duration get currentPosition => _currentPosition;
-  Duration get duration => _duration;
   String? get currentFilePath => _currentFilePath;
 
-  /// Play audio from file path
+  Stream<Duration> get positionStream => _player.positionStream;
+  Stream<Duration?> get durationStream => _player.durationStream;
+  Stream<PlayerState> get playerStateStream => _player.playerStateStream;
+
   Future<void> play(String filePath) async {
-    try {
-      _currentFilePath = filePath;
-      _playbackState = PlaybackState.playing;
-
-      // Implementation with 'just_audio' package:
-      // final player = AudioPlayer();
-      // await player.setFilePath(filePath);
-      // await player.play();
-
-      if (kDebugMode) {
-        print('Playing: $filePath');
-      }
-    } catch (e) {
-      _playbackState = PlaybackState.stopped;
-      rethrow;
-    }
+    _currentFilePath = filePath;
+    await _player.setFilePath(filePath);
+    await _player.play();
+    _playbackState = PlaybackState.playing;
   }
 
-  /// Play audio from URL (for reminders stored on server)
   Future<void> playFromUrl(String url) async {
-    try {
-      _currentFilePath = url;
-      _playbackState = PlaybackState.playing;
-
-      // Implementation with 'just_audio' package:
-      // final player = AudioPlayer();
-      // await player.setUrl(url);
-      // await player.play();
-
-      if (kDebugMode) {
-        print('Playing from URL: $url');
-      }
-    } catch (e) {
-      _playbackState = PlaybackState.stopped;
-      rethrow;
-    }
+    _currentFilePath = url;
+    await _player.setUrl(url);
+    await _player.play();
+    _playbackState = PlaybackState.playing;
   }
 
-  /// Pause playback
   Future<void> pause() async {
-    try {
-      _playbackState = PlaybackState.paused;
-
-      // Implementation:
-      // final player = AudioPlayer();
-      // await player.pause();
-
-      if (kDebugMode) {
-        print('Playback paused');
-      }
-    } catch (e) {
-      rethrow;
-    }
+    await _player.pause();
+    _playbackState = PlaybackState.paused;
   }
 
-  /// Resume paused playback
   Future<void> resume() async {
-    try {
-      _playbackState = PlaybackState.playing;
-
-      // Implementation:
-      // final player = AudioPlayer();
-      // await player.play();
-
-      if (kDebugMode) {
-        print('Playback resumed');
-      }
-    } catch (e) {
-      rethrow;
-    }
+    await _player.play();
+    _playbackState = PlaybackState.playing;
   }
 
-  /// Stop playback
   Future<void> stop() async {
-    try {
-      _playbackState = PlaybackState.stopped;
-      _currentPosition = Duration.zero;
-
-      // Implementation:
-      // final player = AudioPlayer();
-      // await player.stop();
-
-      if (kDebugMode) {
-        print('Playback stopped');
-      }
-    } catch (e) {
-      rethrow;
-    }
+    await _player.stop();
+    await _player.seek(Duration.zero);
+    _playbackState = PlaybackState.stopped;
   }
 
-  /// Seek to specific position
-  Future<void> seek(Duration position) async {
-    try {
-      _currentPosition = position;
+  Future<void> seek(Duration position) async => _player.seek(position);
 
-      // Implementation:
-      // final player = AudioPlayer();
-      // await player.seek(position);
-
-      if (kDebugMode) {
-        print('Seeked to: $position');
-      }
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Get audio duration
-  Future<Duration> getDuration(String filePath) async {
-    try {
-      // Implementation to get duration from file
-      return Duration.zero; // Placeholder
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  /// Listen to playback state changes
-  /// Implement with stream or riverpod notifier
-  void onPlaybackStateChanged(Function(PlaybackState) callback) {
-    // Implementation for state change callbacks
-  }
-
-  /// Listen to position changes
-  /// Implement with stream or riverpod notifier
-  void onPositionChanged(Function(Duration) callback) {
-    // Implementation for position change callbacks
-  }
+  Future<void> dispose() async => _player.dispose();
 }

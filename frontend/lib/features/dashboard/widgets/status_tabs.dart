@@ -1,63 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/task_model.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../providers/task_provider.dart';
 
-class StatusTabs extends StatefulWidget {
-  // เพิ่ม callback เพื่อส่งค่ากลับไปหน้าหลักว่าเลือก tab ไหน
+class StatusTabs extends ConsumerStatefulWidget {
   final Function(int index)? onTabChange;
 
   const StatusTabs({super.key, this.onTabChange});
 
   @override
-  State<StatusTabs> createState() => _StatusTabsState();
+  ConsumerState<StatusTabs> createState() => _StatusTabsState();
 }
 
-class _StatusTabsState extends State<StatusTabs> {
-  // เก็บค่า index ของ tab ที่ถูกเลือก (เริ่มต้นที่ 0)
+class _StatusTabsState extends ConsumerState<StatusTabs> {
   int _selectedIndex = 0;
 
-  // ข้อมูลของ Tab (สามารถรับมาจาก API หรือ Prop ได้ในอนาคต)
-  final List<Map<String, dynamic>> _tabs = [
-    {
-      "label": "Todo (12)",
-      "icon": Icons.radio_button_unchecked,
-    },
-    {
-      "label": "Doing (3)",
-      "icon": Icons.play_circle_outline,
-    },
-    {
-      "label": "Done (5)",
-      "icon": Icons.check_circle_outline,
-    },
+  static const List<Map<String, dynamic>> _tabDefs = [
+    {'status': 'todo', 'icon': Icons.radio_button_unchecked},
+    {'status': 'doing', 'icon': Icons.play_circle_outline},
+    {'status': 'done', 'icon': Icons.check_circle_outline},
   ];
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authProvider);
+    final tasksAsync = user != null
+        ? ref.watch(userTasksProvider(user.id))
+        : const AsyncValue<List<Task>>.data([]);
+
+    final tasks = (tasksAsync.asData?.value ?? []);
+
+    int countFor(String status) =>
+        tasks.where((t) => (t.status ?? 'todo') == status).length;
+
+    final labels = [
+      'Todo (${countFor('todo')})',
+      'Doing (${countFor('doing')})',
+      'Done (${countFor('done')})',
+    ];
+
     return SizedBox(
       height: 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _tabs.length,
+        itemCount: _tabDefs.length,
         separatorBuilder: (context, index) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          final tab = _tabs[index];
           final bool isSelected = _selectedIndex == index;
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                _selectedIndex = index;
-              });
-              // เรียก callback ถ้ามีการส่งมา
-              if (widget.onTabChange != null) {
-                widget.onTabChange!(index);
-              }
+              setState(() => _selectedIndex = index);
+              widget.onTabChange?.call(index);
             },
             child: StatusPill(
-              icon: tab['icon'],
-              label: tab['label'],
-              isActive: isSelected, // ส่งค่า true ถ้า index ตรงกัน
+              icon: _tabDefs[index]['icon'] as IconData,
+              label: labels[index],
+              isActive: isSelected,
             ),
           );
         },
@@ -66,7 +68,7 @@ class _StatusTabsState extends State<StatusTabs> {
   }
 }
 
-// --- StatusPill (เหมือนเดิม ปรับแค่ const นิดหน่อย) ---
+// --- StatusPill (เน€เธซเธกเธทเธญเธเน€เธ”เธดเธก เธเธฃเธฑเธเนเธเน const เธเธดเธ”เธซเธเนเธญเธข) ---
 class StatusPill extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -81,7 +83,7 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ใช้ AnimatedContainer เพื่อความสมูทเวลาเปลี่ยนสี (Optional)
+    // เนเธเน AnimatedContainer เน€เธเธทเนเธญเธเธงเธฒเธกเธชเธกเธนเธ—เน€เธงเธฅเธฒเน€เธเธฅเธตเนเธขเธเธชเธต (Optional)
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -91,7 +93,7 @@ class StatusPill extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.3),
+                  color: AppColors.cyan.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -115,7 +117,9 @@ class StatusPill extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.white : AppColors.text.withOpacity(0.8),
+              color: isActive
+                  ? Colors.white
+                  : AppColors.text.withValues(alpha: 0.8),
               fontWeight: FontWeight.w600,
               fontSize: 14,
             ),

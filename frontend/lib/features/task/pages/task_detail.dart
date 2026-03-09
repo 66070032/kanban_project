@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/task_model.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/auth_provider.dart';
+import '../../../providers/task_provider.dart';
 import '../widget/voice_recorder_widget.dart';
 import '../widget/voice_player_widget.dart';
-import '../../auth/pages/login_page.dart';
 
 /// Task Detail Page with Voice Features
 /// Allows users to view task details, record voice instructions, and playback
@@ -18,9 +19,15 @@ class TaskDetailPage extends ConsumerStatefulWidget {
 }
 
 class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
-  bool _showVoiceRecorder = false;
   String? _voiceInstructionPath;
   bool _isLoading = false;
+  late String _currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentStatus = widget.task.status ?? 'todo';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +60,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -92,7 +99,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 14,
                         offset: const Offset(0, 4),
                       ),
@@ -130,7 +137,7 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
@@ -151,27 +158,28 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(
-                              widget.task.status ?? 'todo',
-                            ).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            widget.task.status?.toUpperCase() ?? 'TODO',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _getStatusColor(
-                                widget.task.status ?? 'todo',
-                              ),
+                        DropdownButton<String>(
+                          value: _currentStatus,
+                          underline: const SizedBox(),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'todo',
+                              child: Text('To Do'),
                             ),
-                          ),
+                            DropdownMenuItem(
+                              value: 'doing',
+                              child: Text('In Progress'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'done',
+                              child: Text('Done'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _currentStatus = value);
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -225,7 +233,6 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                   onRecordingComplete: (filePath, duration) {
                     setState(() {
                       _voiceInstructionPath = filePath;
-                      _showVoiceRecorder = false;
                     });
 
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -304,48 +311,39 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'todo':
-        return Colors.grey;
-      case 'doing':
-        return Colors.orange;
-      case 'done':
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
-
   Future<void> _handleUpdateTask() async {
     setState(() => _isLoading = true);
 
-    try {
-      // TODO: Implement API call to update task with voice instruction
-      // Example: await taskProvider.updateTask(widget.task.id, {...});
+    final updates = {
+      'status': _currentStatus,
+      if (_voiceInstructionPath != null)
+        'voiceInstructionPath': _voiceInstructionPath,
+    };
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task updated successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating task: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    final success = await ref
+        .read(tasksProvider.notifier)
+        .updateTask(widget.task.id, updates);
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      final user = ref.read(authProvider);
+      if (user != null) ref.invalidate(userTasksProvider(user.id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task updated successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update task. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -374,32 +372,30 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
 
     setState(() => _isLoading = true);
 
-    try {
-      // TODO: Implement API call to delete task
-      // Example: await taskProvider.deleteTask(widget.task.id);
+    final success = await ref
+        .read(tasksProvider.notifier)
+        .deleteTask(widget.task.id);
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Task deleted successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting task: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      final user = ref.read(authProvider);
+      if (user != null) ref.invalidate(userTasksProvider(user.id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Task deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete task. Please try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

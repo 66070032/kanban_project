@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
-import 'card_decoration.dart';
 
 /// Primary action button (CTA)
 class PrimaryButton extends StatelessWidget {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 
 class GroupTab extends StatefulWidget {
-  // เพิ่ม callback เพื่อส่งค่ากลับไปหน้าหลักว่าเลือก tab ไหน
+  // เน€เธเธดเนเธก callback เน€เธเธทเนเธญเธชเนเธเธเนเธฒเธเธฅเธฑเธเนเธเธซเธเนเธฒเธซเธฅเธฑเธเธงเนเธฒเน€เธฅเธทเธญเธ tab เนเธซเธ
   final Function(int index)? onTabChange;
 
   const GroupTab({super.key, this.onTabChange});
@@ -12,10 +12,10 @@ class GroupTab extends StatefulWidget {
 }
 
 class _GroupTabState extends State<GroupTab> {
-  // เก็บค่า index ของ tab ที่ถูกเลือก (เริ่มต้นที่ 0)
+  // เน€เธเนเธเธเนเธฒ index เธเธญเธ tab เธ—เธตเนเธ–เธนเธเน€เธฅเธทเธญเธ (เน€เธฃเธดเนเธกเธ•เนเธเธ—เธตเน 0)
   int _selectedIndex = 0;
 
-  // ข้อมูลของ Tab (สามารถรับมาจาก API หรือ Prop ได้ในอนาคต)
+  // เธเนเธญเธกเธนเธฅเธเธญเธ Tab (เธชเธฒเธกเธฒเธฃเธ–เธฃเธฑเธเธกเธฒเธเธฒเธ API เธซเธฃเธทเธญ Prop เนเธ”เนเนเธเธญเธเธฒเธเธ•)
   final List<Map<String, dynamic>> _tabs = [
     {"label": "All"},
     {"label": "Recent"},
@@ -41,14 +41,14 @@ class _GroupTabState extends State<GroupTab> {
               setState(() {
                 _selectedIndex = index;
               });
-              // เรียก callback ถ้ามีการส่งมา
+              // เน€เธฃเธตเธขเธ callback เธ–เนเธฒเธกเธตเธเธฒเธฃเธชเนเธเธกเธฒ
               if (widget.onTabChange != null) {
                 widget.onTabChange!(index);
               }
             },
             child: StatusPill(
               label: tab['label'],
-              isActive: isSelected, // ส่งค่า true ถ้า index ตรงกัน
+              isActive: isSelected, // เธชเนเธเธเนเธฒ true เธ–เนเธฒ index เธ•เธฃเธเธเธฑเธ
             ),
           );
         },
@@ -57,7 +57,7 @@ class _GroupTabState extends State<GroupTab> {
   }
 }
 
-// --- StatusPill (เหมือนเดิม ปรับแค่ const นิดหน่อย) ---
+// --- StatusPill (เน€เธซเธกเธทเธญเธเน€เธ”เธดเธก เธเธฃเธฑเธเนเธเน const เธเธดเธ”เธซเธเนเธญเธข) ---
 class StatusPill extends StatelessWidget {
   final String label;
   final bool isActive;
@@ -66,7 +66,7 @@ class StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ใช้ AnimatedContainer เพื่อความสมูทเวลาเปลี่ยนสี (Optional)
+    // เนเธเน AnimatedContainer เน€เธเธทเนเธญเธเธงเธฒเธกเธชเธกเธนเธ—เน€เธงเธฅเธฒเน€เธเธฅเธตเนเธขเธเธชเธต (Optional)
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -76,7 +76,7 @@ class StatusPill extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.3),
+                  color: AppColors.cyan.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -100,7 +100,7 @@ class StatusPill extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.white : AppColors.text.withOpacity(0.8),
+              color: isActive ? Colors.white : AppColors.text.withValues(alpha: 0.8),
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),

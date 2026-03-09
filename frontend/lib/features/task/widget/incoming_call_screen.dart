@@ -27,7 +27,7 @@ class IncomingCallScreen extends StatefulWidget {
 }
 
 class _IncomingCallScreenState extends State<IncomingCallScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _countdownController;
   int _secondsRemaining = 30;
@@ -99,7 +99,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.95),
+      backgroundColor: Colors.black.withValues(alpha: 0.95),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -166,9 +166,11 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.2),
+                      color: Colors.red.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.red.withOpacity(0.5)),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.5),
+                      ),
                     ),
                     child: Text(
                       'Auto-reject in ${_secondsRemaining}s',

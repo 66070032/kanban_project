@@ -73,11 +73,9 @@
 
 ## 🛠 Tech Stack
 
-- **Frontend:** Flutter
-- **Backend:** Firebase
-  - Firebase Authentication
-  - Cloud Firestore
-  - Firebase Storage
+- **Frontend:** Flutter (Dart) + Riverpod (state management)
+- **Backend:** Node.js / Express.js REST API
+- **Database:** PostgreSQL (hosted at `https://kanban.jokeped.xyz`)
 - **Audio**
   - Recording: `record`
   - Playback: `just_audio`
@@ -89,11 +87,41 @@
 
 ## 🧱 System Architecture (High Level)
 
-- ข้อมูล Task และ User เก็บใน Cloud Firestore
-- ไฟล์เสียงเก็บใน Firebase Storage
-- เมื่อถึงเวลา Due Date ระบบจะใช้ Local Notification
-- ไฟล์เสียงถูกดาวน์โหลดและเล่นจากเครื่องผู้ใช้  
-  เพื่อให้แจ้งเตือนได้แม้ไม่มีอินเทอร์เน็ต
+- **Frontend (Flutter)** — UI layer using Riverpod providers for reactive state
+- **Service Layer** — Handles all HTTP API calls (`task_service`, `user_service`, etc.)
+- **Backend REST API** — Express.js server at `https://kanban.jokeped.xyz`
+- **Database** — PostgreSQL stores users, tasks, reminders, groups
+- Voice files are uploaded as multipart form-data and the path stored in the task record
+- Local Notifications trigger at Due Date/Time using `flutter_local_notifications`
+
+---
+
+## 🚀 Setup & Running
+
+### Prerequisites
+
+- Flutter SDK ≥ 3.10
+- A device/emulator (Android or iOS)
+- Internet connection (API is hosted)
+
+### Run the Flutter App
+
+```bash
+cd frontend
+flutter pub get
+flutter run
+```
+
+The app connects to the live backend at `https://kanban.jokeped.xyz` automatically.
+
+### Backend (optional local setup)
+
+```bash
+cd backend
+npm install
+# Set DATABASE_URL in .env
+npm start
+```
 
 ---
 

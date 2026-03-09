@@ -36,7 +36,7 @@ class Header extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
-    final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Guest';
+    final userName = user?.displayName ?? user?.email.split('@')[0] ?? 'Guest';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
@@ -49,15 +49,15 @@ class Header extends ConsumerWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.cyan.withOpacity(0.2),
+                color: AppColors.cyan.withValues(alpha: 0.2),
                 width: 2,
               ),
             ),
             child: ClipOval(
               child: _buildAvatarImage(user?.avatarUrl) != null
                   ? Image(
-                      key: ValueKey(user?.avatarUrl),
-                      image: _buildAvatarImage(user!.avatarUrl!)!,
+                      key: ValueKey(user!.avatarUrl),
+                      image: _buildAvatarImage(user.avatarUrl!)!,
                       fit: BoxFit.cover,
                       width: 48,
                       height: 48,

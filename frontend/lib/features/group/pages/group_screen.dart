@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widget/group_card.dart';
 import '../../../misc/header.dart';
-import '/misc/navigation.dart';
 import '../widget/group_tab.dart';
 
 class GroupScreen extends StatelessWidget {

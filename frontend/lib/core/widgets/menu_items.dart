@@ -143,9 +143,9 @@ class _ToggleMenuItemState extends State<ToggleMenuItem> {
             });
             widget.onChanged(value);
           },
-          activeColor: AppColors.cyan,
+          activeThumbColor: AppColors.cyan,
           inactiveThumbColor: Colors.grey,
-          inactiveTrackColor: Colors.grey.withOpacity(0.3),
+          inactiveTrackColor: Colors.grey.withValues(alpha: 0.3),
         ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

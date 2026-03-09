@@ -1,9 +1,10 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 enum AudioState { loading, playing, paused, stopped, error }
 
-/// Voice Player Widget
-/// Reusable widget for playing voice instructions and reminders
+/// Voice Player Widget  uses `just_audio` for real audio playback.
 class VoicePlayerWidget extends StatefulWidget {
   final String audioPath;
   final String? audioUrl;
@@ -25,131 +26,84 @@ class VoicePlayerWidget extends StatefulWidget {
 }
 
 class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
+  late AudioPlayer _player;
   AudioState _audioState = AudioState.stopped;
   Duration _duration = Duration.zero;
   Duration _currentPosition = Duration.zero;
-  bool _isPlaying = false;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration?>? _durationSub;
+  StreamSubscription<PlayerState>? _stateSub;
 
   @override
   void initState() {
     super.initState();
-    if (widget.autoPlay) {
-      Future.microtask(() => _play());
-    }
+    _player = AudioPlayer();
+
+    _positionSub = _player.positionStream.listen((pos) {
+      if (mounted) setState(() => _currentPosition = pos);
+    });
+
+    _durationSub = _player.durationStream.listen((dur) {
+      if (mounted && dur != null) setState(() => _duration = dur);
+    });
+
+    _stateSub = _player.playerStateStream.listen((s) {
+      if (!mounted) return;
+      setState(() {
+        if (s.processingState == ProcessingState.completed) {
+          _audioState = AudioState.stopped;
+          _currentPosition = Duration.zero;
+          _player.seek(Duration.zero);
+        } else if (s.processingState == ProcessingState.loading ||
+            s.processingState == ProcessingState.buffering) {
+          _audioState = AudioState.loading;
+        } else if (s.playing) {
+          _audioState = AudioState.playing;
+        } else {
+          _audioState = AudioState.paused;
+        }
+      });
+    });
+
+    if (widget.autoPlay) Future.microtask(() => _play());
   }
 
   @override
   void dispose() {
-    _stop();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
+    _stateSub?.cancel();
+    _player.dispose();
     super.dispose();
   }
 
   Future<void> _play() async {
     try {
       setState(() => _audioState = AudioState.loading);
-
-      // TODO: Implement actual playback with 'just_audio' package
-      // final playbackService = AudioPlaybackService();
-      // if (widget.audioUrl != null) {
-      //   await playbackService.playFromUrl(widget.audioUrl!);
-      // } else {
-      //   await playbackService.play(widget.audioPath);
-      // }
-
-      setState(() {
-        _audioState = AudioState.playing;
-        _isPlaying = true;
-        _duration = const Duration(seconds: 30); // Placeholder
-      });
-
-      // Simulate playback completion
-      await Future.delayed(_duration);
-      if (mounted) {
-        _stop();
+      if (widget.audioUrl != null && widget.audioUrl!.isNotEmpty) {
+        await _player.setUrl(widget.audioUrl!);
+      } else {
+        await _player.setFilePath(widget.audioPath);
       }
+      await _player.play();
     } catch (e) {
       if (mounted) {
         setState(() => _audioState = AudioState.error);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Playback error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Playback error: $e')));
       }
     }
   }
 
-  Future<void> _pause() async {
-    try {
-      setState(() {
-        _audioState = AudioState.paused;
-        _isPlaying = false;
-      });
-
-      // TODO: Implement actual pause
-      // final playbackService = AudioPlaybackService();
-      // await playbackService.pause();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error pausing: $e')));
-      }
-    }
-  }
-
-  Future<void> _resume() async {
-    try {
-      setState(() {
-        _audioState = AudioState.playing;
-        _isPlaying = true;
-      });
-
-      // TODO: Implement actual resume
-      // final playbackService = AudioPlaybackService();
-      // await playbackService.resume();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error resuming: $e')));
-      }
-    }
-  }
+  Future<void> _pause() async => _player.pause();
+  Future<void> _resume() async => _player.play();
 
   Future<void> _stop() async {
-    try {
-      setState(() {
-        _audioState = AudioState.stopped;
-        _isPlaying = false;
-        _currentPosition = Duration.zero;
-      });
-
-      // TODO: Implement actual stop
-      // final playbackService = AudioPlaybackService();
-      // await playbackService.stop();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error stopping: $e')));
-      }
-    }
+    await _player.stop();
+    await _player.seek(Duration.zero);
   }
 
-  Future<void> _seek(Duration position) async {
-    try {
-      setState(() => _currentPosition = position);
-
-      // TODO: Implement actual seek
-      // final playbackService = AudioPlaybackService();
-      // await playbackService.seek(position);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error seeking: $e')));
-      }
-    }
-  }
+  Future<void> _seek(Duration position) async => _player.seek(position);
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -185,11 +139,11 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
               GestureDetector(
                 onTap: _audioState == AudioState.loading
                     ? null
-                    : (_isPlaying
-                          ? _pause
-                          : (_audioState == AudioState.paused
-                                ? _resume
-                                : _play)),
+                    : (_audioState == AudioState.playing
+                        ? _pause
+                        : (_audioState == AudioState.paused
+                            ? _resume
+                            : _play)),
                 child: Container(
                   width: 50,
                   height: 50,
@@ -200,7 +154,9 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                   child: Icon(
                     _audioState == AudioState.loading
                         ? Icons.hourglass_bottom
-                        : (_isPlaying ? Icons.pause : Icons.play_arrow),
+                        : (_audioState == AudioState.playing
+                            ? Icons.pause
+                            : Icons.play_arrow),
                     color: Colors.white,
                     size: 24,
                   ),
@@ -220,10 +176,14 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                         ),
                       ),
                       child: Slider(
-                        value: _currentPosition.inSeconds.toDouble(),
-                        max: _duration.inSeconds.toDouble(),
+                        value: _currentPosition.inMilliseconds
+                            .toDouble()
+                            .clamp(0, _duration.inMilliseconds.toDouble()),
+                        max: _duration.inMilliseconds > 0
+                            ? _duration.inMilliseconds.toDouble()
+                            : 1,
                         onChanged: (value) =>
-                            _seek(Duration(seconds: value.toInt())),
+                            _seek(Duration(milliseconds: value.toInt())),
                         activeColor: widget.accentColor,
                         inactiveColor: Colors.grey[300],
                       ),
@@ -233,17 +193,13 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                       children: [
                         Text(
                           _formatDuration(_currentPosition),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                         Text(
                           _formatDuration(_duration),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
+                          style:
+                              TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                       ],
                     ),

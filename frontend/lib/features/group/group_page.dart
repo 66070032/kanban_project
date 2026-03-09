@@ -11,9 +11,6 @@ class GroupPage extends StatefulWidget {
 }
 
 class _GroupPageState extends State<GroupPage> {
-  int _tagIndex = 0;
-  final List<String> _tags = ['All', 'Recent', 'Favorites', 'Archived'];
-
   // Dummy Data
   final List<GroupModel> _groups = List.generate(
     5,

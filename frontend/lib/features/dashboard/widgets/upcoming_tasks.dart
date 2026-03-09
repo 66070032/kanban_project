@@ -4,6 +4,8 @@ import '../../../core/theme/app_colors.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/task_provider.dart';
+import '../../../models/task_model.dart';
+import '../../task/pages/task_detail.dart';
 
 class UpcomingTasksList extends ConsumerWidget {
   const UpcomingTasksList({super.key});
@@ -33,7 +35,10 @@ class UpcomingTasksList extends ConsumerWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const _AllTasksPage()),
+                ),
                 child: const Text(
                   "See All",
                   style: TextStyle(
@@ -75,25 +80,31 @@ class UpcomingTasksList extends ConsumerWidget {
                 return Column(
                   children: displayTasks.map<Widget>((task) {
                     final title = task.title;
-                    final description = task.description ?? "";
-                    final status = task.status ?? "todo";
+                    final description = task.description ?? '';
+                    final status = task.status ?? 'todo';
                     final dueAt = task.dueAt;
-                    // Temporarily set to false
-                    final hasVoice = false;
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
-                      child: TaskCard(
-                        tagLabel: _formatStatus(status),
-                        tagColor: _getTagColor(status),
-                        tagTextColor: _getTagTextColor(status),
-                        timeLabel: _formatDate(dueAt),
-                        title: title,
-                        subtitle: description,
-                        groupImage:
-                            "https://ui-avatars.com/api/?name=${Uri.encodeComponent(title)}&background=random&format=png",
-                        duration: hasVoice ? "0:30" : "N/A",
-                        showWaveform: hasVoice,
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailPage(task: task),
+                          ),
+                        ),
+                        child: TaskCard(
+                          tagLabel: _formatStatus(status),
+                          tagColor: _getTagColor(status),
+                          tagTextColor: _getTagTextColor(status),
+                          timeLabel: _formatDate(dueAt),
+                          title: title,
+                          subtitle: description,
+                          groupImage:
+                              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(title)}&background=random&format=png',
+                          duration: 'N/A',
+                          showWaveform: false,
+                        ),
                       ),
                     );
                   }).toList(),
@@ -117,7 +128,7 @@ class UpcomingTasksList extends ConsumerWidget {
             Icon(Icons.celebration, size: 56, color: AppColors.cyan),
             SizedBox(height: 16),
             Text(
-              "Yay! You got no tasks anymore, cheers! 🎉",
+              "Yay! You got no tasks anymore, cheers! ๐",
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: AppColors.subText,
@@ -140,10 +151,10 @@ class UpcomingTasksList extends ConsumerWidget {
   Color _getTagColor(String status) {
     switch (status.toLowerCase()) {
       case 'done':
-        return Colors.green.withOpacity(0.15);
+        return Colors.green.withValues(alpha: 0.15);
       case 'doing':
       case 'in_progress':
-        return Colors.orange.withOpacity(0.15);
+        return Colors.orange.withValues(alpha: 0.15);
       default:
         return AppColors.redTagBg;
     }
@@ -182,10 +193,10 @@ class UpcomingTasksList extends ConsumerWidget {
 
     final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $period";
 
-    if (isToday) return "Today • $timeStr";
-    if (isTomorrow) return "Tomorrow • $timeStr";
+    if (isToday) return "Today โ€ข $timeStr";
+    if (isTomorrow) return "Tomorrow โ€ข $timeStr";
 
-    return "${date.day}/${date.month}/${date.year} • $timeStr";
+    return "${date.day}/${date.month}/${date.year} โ€ข $timeStr";
   }
 }
 
@@ -384,5 +395,105 @@ class TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(2)),
       ),
     );
+  }
+}
+
+// โ”€โ”€โ”€ All Tasks Page โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+
+class _AllTasksPage extends ConsumerWidget {
+  const _AllTasksPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+    final tasksAsync = user != null
+        ? ref.watch(userTasksProvider(user.id))
+        : const AsyncValue<List<Task>>.loading();
+
+    return Scaffold(
+      backgroundColor: AppColors.lightGray,
+      appBar: AppBar(
+        title: const Text('All Tasks'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+      ),
+      body: tasksAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.cyan),
+        ),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 12),
+                Text('Failed to load tasks: $e', textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+        data: (tasks) {
+          if (tasks.isEmpty) {
+            return const Center(
+              child: Text(
+                'No tasks yet. Tap + to create one!',
+                style: TextStyle(color: AppColors.subText),
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: tasks.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
+                ),
+                child: TaskCard(
+                  tagLabel: task.status?.toUpperCase() ?? 'TODO',
+                  tagColor: _getTagColor(task.status ?? 'todo'),
+                  tagTextColor: _getTagTextColor(task.status ?? 'todo'),
+                  timeLabel: task.dueAt != null
+                      ? '${task.dueAt!.day}/${task.dueAt!.month}/${task.dueAt!.year}'
+                      : 'No Due Date',
+                  title: task.title,
+                  subtitle: task.description ?? '',
+                  duration: 'N/A',
+                  showWaveform: false,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getTagColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return Colors.green.withValues(alpha: 0.15);
+      case 'doing':
+        return Colors.orange.withValues(alpha: 0.15);
+      default:
+        return AppColors.redTagBg;
+    }
+  }
+
+  Color _getTagTextColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return Colors.green;
+      case 'doing':
+        return Colors.orange;
+      default:
+        return AppColors.redTagText;
+    }
   }
 }

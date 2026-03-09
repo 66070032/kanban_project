@@ -1,10 +1,10 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../core/config/app_config.dart';
 
-/// API Service for centralized HTTP communication with backend
+/// Centralized HTTP service - all API calls should go through here.
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000'; // Local development
-  // For hosted: use 'https://kanban.jokeped.xyz' or your deployed backend
+  static String get baseUrl => AppConfig.baseUrl;
 
   static final ApiService _instance = ApiService._internal();
 

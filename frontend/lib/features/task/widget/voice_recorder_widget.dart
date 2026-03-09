@@ -1,7 +1,9 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 
-/// Voice Recorder Widget
-/// Reusable widget for recording voice instructions and reminders
+/// Voice Recorder Widget  uses the `record` package for real microphone input.
 class VoiceRecorderWidget extends StatefulWidget {
   final Function(String filePath, Duration duration)? onRecordingComplete;
   final String title;
@@ -19,10 +21,12 @@ class VoiceRecorderWidget extends StatefulWidget {
 }
 
 class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
+  final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
   Duration _recordingDuration = Duration.zero;
   String? _recordedFilePath;
   late Stopwatch _stopwatch;
+  Timer? _durationTimer;
 
   @override
   void initState() {
@@ -32,37 +36,51 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
 
   @override
   void dispose() {
+    _durationTimer?.cancel();
     _stopwatch.stop();
+    _recorder.dispose();
     super.dispose();
   }
 
   Future<void> _startRecording() async {
     try {
+      final hasPermission = await _recorder.hasPermission();
+      if (!hasPermission) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission denied')),
+          );
+        }
+        return;
+      }
+
+      final dir = await getTemporaryDirectory();
+      final path =
+          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+      await _recorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000),
+        path: path,
+      );
+
+      _stopwatch.reset();
+      _stopwatch.start();
+
+      _durationTimer =
+          Timer.periodic(const Duration(milliseconds: 100), (_) {
+        if (mounted && _isRecording) {
+          setState(() => _recordingDuration = _stopwatch.elapsed);
+        }
+      });
+
       setState(() {
         _isRecording = true;
         _recordingDuration = Duration.zero;
       });
-
-      _stopwatch.start();
-
-      // TODO: Implement actual recording with 'record' package
-      // final recordService = AudioRecordingService();
-      // _recordedFilePath = await recordService.startRecording();
-
-      // Update duration display
-      while (_isRecording) {
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (mounted) {
-          setState(() {
-            _recordingDuration = _stopwatch.elapsed;
-          });
-        }
-      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Recording error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Recording error: $e')));
         setState(() => _isRecording = false);
       }
     }
@@ -70,47 +88,40 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
 
   Future<void> _stopRecording() async {
     try {
+      _durationTimer?.cancel();
       _stopwatch.stop();
+
+      final path = await _recorder.stop();
 
       setState(() {
         _isRecording = false;
         _recordingDuration = _stopwatch.elapsed;
+        _recordedFilePath = path;
       });
 
-      // TODO: Implement actual stop recording
-      // final recordService = AudioRecordingService();
-      // _recordedFilePath = await recordService.stopRecording();
-
-      // Callback to parent
-      if (_recordedFilePath != null) {
-        widget.onRecordingComplete?.call(
-          _recordedFilePath!,
-          _recordingDuration,
-        );
+      if (path != null) {
+        widget.onRecordingComplete?.call(path, _stopwatch.elapsed);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error stopping recording: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error stopping recording: $e')),
+        );
       }
     }
   }
 
   Future<void> _cancelRecording() async {
     try {
+      _durationTimer?.cancel();
       _stopwatch.stop();
       _stopwatch.reset();
-
+      await _recorder.cancel();
       setState(() {
         _isRecording = false;
         _recordedFilePath = null;
         _recordingDuration = Duration.zero;
       });
-
-      // TODO: Implement cancel recording
-      // final recordService = AudioRecordingService();
-      // await recordService.cancelRecording();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -138,7 +149,7 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
         ),
         borderRadius: BorderRadius.circular(12),
         color: _isRecording
-            ? widget.accentColor.withOpacity(0.1)
+            ? widget.accentColor.withValues(alpha: 0.1)
             : Colors.transparent,
       ),
       child: Column(
@@ -188,6 +199,28 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
                 ),
               ],
             )
+          else if (_recordedFilePath != null)
+            Column(
+              children: [
+                Icon(Icons.check_circle, size: 48, color: widget.accentColor),
+                const SizedBox(height: 8),
+                Text(
+                  'Recorded: ${_formatDuration(_recordingDuration)}',
+                  style: TextStyle(color: widget.accentColor),
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _recordedFilePath = null;
+                      _recordingDuration = Duration.zero;
+                    });
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Re-record'),
+                ),
+              ],
+            )
           else
             ElevatedButton.icon(
               onPressed: _startRecording,
@@ -196,10 +229,6 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.accentColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 12,
-                ),
               ),
             ),
         ],

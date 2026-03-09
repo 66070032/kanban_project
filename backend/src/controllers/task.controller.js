@@ -1,21 +1,21 @@
-const pool = require('../db');
+const pool = require("../db");
 
 // สร้าง Task
 exports.createTask = async (req, res) => {
   try {
-    const { title, description, assignee_id } = req.body;
+    const { title, description, assignee_id, status, due_at } = req.body;
 
     const { rows } = await pool.query(
-      `INSERT INTO tasks (title, description, assignee_id)
-       VALUES ($1, $2, $3)
+      `INSERT INTO tasks (title, description, assignee_id, status, due_at)
+       VALUES ($1, $2, $3, COALESCE($4, 'todo'), $5)
        RETURNING *`,
-      [title, description, assignee_id]
+      [title, description, assignee_id, status, due_at || null],
     );
 
     res.status(201).json(rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -32,7 +32,7 @@ exports.getTasks = async (req, res) => {
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -41,18 +41,21 @@ exports.getTasksByAssignee = async (req, res) => {
   try {
     const { assignee_id } = req.params;
 
-    const { rows } = await pool.query(`
+    const { rows } = await pool.query(
+      `
       SELECT t.*, u.display_name as assignee_name 
       FROM tasks t 
       LEFT JOIN users u ON t.assignee_id = u.id 
       WHERE t.assignee_id = $1
       ORDER BY t.created_at DESC
-    `, [assignee_id]);
+    `,
+      [assignee_id],
+    );
 
     res.json(rows);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -71,11 +74,11 @@ exports.updateTask = async (req, res) => {
            updated_at=NOW()
        WHERE id=$5
        RETURNING *`,
-      [title, description, status, assignee_id, id]
+      [title, description, status, assignee_id, id],
     );
 
     if (rows.length === 0)
-      return res.status(404).json({ message: 'Task not found' });
+      return res.status(404).json({ message: "Task not found" });
 
     res.json(rows[0]);
   } catch (err) {
@@ -88,13 +91,12 @@ exports.getTaskById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { rows } = await pool.query(
-      `SELECT * FROM tasks WHERE id = $1`,
-      [id]
-    );
+    const { rows } = await pool.query(`SELECT * FROM tasks WHERE id = $1`, [
+      id,
+    ]);
 
     if (rows.length === 0)
-      return res.status(404).json({ message: 'Task not found' });
+      return res.status(404).json({ message: "Task not found" });
 
     res.json(rows[0]);
   } catch (err) {
@@ -107,15 +109,14 @@ exports.deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const { rowCount } = await pool.query(
-      `DELETE FROM tasks WHERE id = $1`,
-      [id]
-    );
+    const { rowCount } = await pool.query(`DELETE FROM tasks WHERE id = $1`, [
+      id,
+    ]);
 
     if (rowCount === 0)
-      return res.status(404).json({ message: 'Task not found' });
+      return res.status(404).json({ message: "Task not found" });
 
-    res.json({ message: 'Task deleted successfully' });
+    res.json({ message: "Task deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

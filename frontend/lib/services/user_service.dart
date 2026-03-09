@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
+import '../core/config/app_config.dart';
 
 class UserService {
-  static const String _baseUrl = 'https://kanban.jokeped.xyz';
+  static String get _baseUrl => AppConfig.baseUrl;
 
   static Future<User> updateUser(
     String id, {
