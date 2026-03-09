@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kanban_project/features/profile/pages/profile_pages.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/primary_button.dart';
 import '../presentation/widgets/auth_input_field.dart';
@@ -11,9 +10,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
-import '../../profile/pages/profile_pages.dart';
-import '../../group/pages/group_screen.dart';
-import '../../../features/dashboard/widgets/dashboard_screen.dart';
+import '../../../main_wrapper.dart';
+import '../../../core/config/app_config.dart';
+import 'register_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -148,7 +147,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          debugPrint("Navigate to Sign Up");
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterPage(),
+                            ),
+                          );
                         },
                         child: Text(
                           'Sign up',
@@ -174,6 +178,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
 
+    // Basic client-side validation
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => errorMessage = 'Please enter your email and password');
+      return;
+    }
+    if (!email.contains('@')) {
+      setState(() => errorMessage = 'Enter a valid email address');
+      return;
+    }
+
     setState(() {
       errorMessage = null;
       isLoading = true;
@@ -181,7 +195,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse("https://kanban.jokeped.xyz/auth/login"),
+        Uri.parse("${AppConfig.baseUrl}/auth/login"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"email": email, "password": password}),
       );
@@ -193,9 +207,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         ref.read(authProvider.notifier).setUser(user);
 
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ProfilePage()),
+          MaterialPageRoute(builder: (_) => const MainWrapper()),
         );
       } else {
         setState(() {

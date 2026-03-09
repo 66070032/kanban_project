@@ -48,7 +48,7 @@ class AuthInputField extends StatelessWidget {
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: GoogleFonts.plusJakartaSans(
-                color: AppColors.subText.withOpacity(0.7),
+                color: AppColors.subText.withValues(alpha: 0.7),
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(

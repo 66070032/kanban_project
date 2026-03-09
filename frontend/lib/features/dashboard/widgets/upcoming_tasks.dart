@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 
-class UpcomingTasksList extends StatelessWidget {
+import '../../../providers/auth_provider.dart';
+import '../../../providers/task_provider.dart';
+import '../../../models/task_model.dart';
+import '../../task/pages/task_detail.dart';
+
+class UpcomingTasksList extends ConsumerWidget {
   const UpcomingTasksList({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+
+    final tasksAsync = user != null
+        ? ref.watch(userTasksProvider(user.id))
+        : const AsyncValue.loading();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -22,7 +35,10 @@ class UpcomingTasksList extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const _AllTasksPage()),
+                ),
                 child: const Text(
                   "See All",
                   style: TextStyle(
@@ -34,54 +50,153 @@ class UpcomingTasksList extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Task 1
-          const TaskCard(
-            tagLabel: "High Priority",
-            tagColor: AppColors.redTagBg,
-            tagTextColor: AppColors.redTagText,
 
-            timeLabel: "Due Tomorrow • 4:00 PM",
-            title: "History Project Research",
-            subtitle: "Find primary sources for the industrial revolution.",
-            // senderName: "Sarah",
-            groupImage:
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuCQUq7KoMp-wQHitECJg8-i3mKRV5_kbGJvNHJ0iNzKECK-rjkr-KqX4N9zmN9n4ZRNIyYyR7wIXf2JHxDWQEjKsWo38NZX-l1qnmr99T_Z9CEmVNGlFTs5AC_u3_B4jOXbbF8MmWl8wk2rxW68qlpKd1JrRh2AG0Mybnz6okqQEYiIZJzGDNrQ6WUR6sjuOtHSuJvbDDjeFlEOQOQ27pmzkNI6po8xKzz4x24I27fTTrWrmDCK9sXx-iwyT4hiH33VFnWr2tZ-xLo",
-            duration: "0:32",
-            showWaveform: true,
-          ),
-          const SizedBox(height: 16),
-          // Task 2
-          const TaskCard(
-            tagLabel: "High Priority",
-            tagColor: AppColors.redTagBg,
-            tagTextColor: AppColors.redTagText,
-            timeLabel: "Today • 2:30 PM",
-            title: "Team Meeting Notes",
-            subtitle: "Review the audio recording from yesterday's sync.",
-            // senderName: "Mark",
-            groupImage:
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuBnKFraXbKRAaEbOP4LatjKcFAecciXaHrG3odWmMYXA3YwWocA_CnsKf7gyUU3tvWqFXKmGR2L3Pc2jzks_E50T0HlSCvUgZP0DITaJcBVs6bYKF0HTMpp3N9rhXKSEFeeJ1G-Rd6aHr4ieKwTHlVP3QnLZj-B4YcPiqSTiwtLQn0BJHlQG1cIJR5PiT-Gm8b0_qU4UA5n9SFyQs__mfJPNMP7XJhwn11iLz4vPAsdTj-iIVvHREWHnF4AmCZWTntIBwgKqYQlRcI",
-            duration: "1:15",
-            showWaveform: false,
-          ),
-          const SizedBox(height: 16),
-          // Task 3
-          const TaskCard(
-            tagLabel: "High Priority",
-            tagColor: AppColors.redTagBg,
-            tagTextColor: AppColors.redTagText,
-            timeLabel: "Friday • 9:00 AM",
-            title: "Review Biology Slides",
-            subtitle: "Chapter 4: Cell structure and functions prep.",
-            // senderName: "Prof. Davis",
-            groupImage:
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuCOHyQUwQ30lDhF3wJd5Cv-82KJK2MCat_51Gf1KDUkQAbI8hKpswoFCfKf5h4k6BazlfxdkEHl0q3MvtM4-RNwBUQQvtWg1O_T627dD6C8BSI0CPZ7JhZsmemGWB1RXtTQjnlOk4pQBAgM0qcC_Gcu8SGxhuEAO6IuJg_tTyaf2ueiXkmP0U7WxCRZZK3LFuRzrWt2hMxYxlUPCQzvYYVJQg0odSaYoqpKJTE3-0E01PHIY_6vZlznyk56ns81uWSNuYJUJEX0K2w",
-            duration: "0:45",
-            showWaveform: false,
-          ),
+          if (user == null)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  "Please log in to view tasks.",
+                  style: TextStyle(color: AppColors.subText),
+                ),
+              ),
+            )
+          else
+            tasksAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40.0),
+                  child: CircularProgressIndicator(color: AppColors.cyan),
+                ),
+              ),
+              error: (error, stackTrace) => _buildEmptyState(),
+              data: (tasks) {
+                if (tasks.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                final displayTasks = tasks.take(3).toList();
+
+                return Column(
+                  children: displayTasks.map<Widget>((task) {
+                    final title = task.title;
+                    final description = task.description ?? '';
+                    final status = task.status ?? 'todo';
+                    final dueAt = task.dueAt;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => TaskDetailPage(task: task),
+                          ),
+                        ),
+                        child: TaskCard(
+                          tagLabel: _formatStatus(status),
+                          tagColor: _getTagColor(status),
+                          tagTextColor: _getTagTextColor(status),
+                          timeLabel: _formatDate(dueAt),
+                          title: title,
+                          subtitle: description,
+                          groupImage:
+                              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(title)}&background=random&format=png',
+                          duration: 'N/A',
+                          showWaveform: false,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
         ],
       ),
     );
+  }
+
+  // --- Helper Methods ---
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 40.0, horizontal: 20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.celebration, size: 56, color: AppColors.cyan),
+            SizedBox(height: 16),
+            Text(
+              "Yay! You got no tasks anymore, cheers! ๐",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.subText,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatStatus(String status) {
+    if (status.isEmpty) return "TODO";
+    return status.replaceAll('_', ' ').toUpperCase();
+  }
+
+  Color _getTagColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return Colors.green.withValues(alpha: 0.15);
+      case 'doing':
+      case 'in_progress':
+        return Colors.orange.withValues(alpha: 0.15);
+      default:
+        return AppColors.redTagBg;
+    }
+  }
+
+  Color _getTagTextColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return Colors.green;
+      case 'doing':
+      case 'in_progress':
+        return Colors.orange;
+      default:
+        return AppColors.redTagText;
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return "No Due Date";
+
+    final now = DateTime.now();
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
+    final isTomorrow =
+        date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day + 1;
+
+    int hour = date.hour;
+    String period = "AM";
+    if (hour >= 12) {
+      period = "PM";
+      if (hour > 12) hour -= 12;
+    }
+    if (hour == 0) hour = 12;
+
+    final timeStr = "$hour:${date.minute.toString().padLeft(2, '0')} $period";
+
+    if (isToday) return "Today โ€ข $timeStr";
+    if (isTomorrow) return "Tomorrow โ€ข $timeStr";
+
+    return "${date.day}/${date.month}/${date.year} โ€ข $timeStr";
   }
 }
 
@@ -92,8 +207,7 @@ class TaskCard extends StatelessWidget {
   final String timeLabel;
   final String title;
   final String subtitle;
-  // final String senderName;
-  final String groupImage;
+  final String? groupImage;
   final String duration;
   final bool showWaveform;
 
@@ -105,8 +219,7 @@ class TaskCard extends StatelessWidget {
     required this.timeLabel,
     required this.title,
     required this.subtitle,
-    // required this.senderName,
-    required this.groupImage,
+    this.groupImage,
     required this.duration,
     required this.showWaveform,
   });
@@ -128,7 +241,6 @@ class TaskCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Top Row: Content & Play Button
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -136,7 +248,6 @@ class TaskCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tag & Time
                     Row(
                       children: [
                         Container(
@@ -183,17 +294,22 @@ class TaskCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    // Text(
-                    //   subtitle,
-                    //   maxLines: 1,
-                    //   overflow: TextOverflow.ellipsis,
-                    //   style: const TextStyle(
-                    //     color: AppColors.subText,
-                    //     fontSize: 13,
-                    //   ),
-                    // ),
+                    // Displaying your dynamic subtitle!
+                    if (subtitle.isNotEmpty) ...[
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.subText,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
                     Text(
                       timeLabel,
+
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: AppColors.subText,
@@ -205,16 +321,21 @@ class TaskCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              // Group Image
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage(groupImage),
+                backgroundImage: groupImage != null && groupImage!.isNotEmpty
+                    ? NetworkImage(groupImage!)
+                    : null,
+                child: groupImage == null || groupImage!.isEmpty
+                    ? Text(
+                        title.isNotEmpty ? title[0].toUpperCase() : '?',
+                        style: const TextStyle(fontSize: 14),
+                      )
+                    : null,
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const SizedBox(height: 12),
-          // Footer: Audio Visualizer / Time
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -274,5 +395,105 @@ class TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(2)),
       ),
     );
+  }
+}
+
+// โ”€โ”€โ”€ All Tasks Page โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€โ”€
+
+class _AllTasksPage extends ConsumerWidget {
+  const _AllTasksPage();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+    final tasksAsync = user != null
+        ? ref.watch(userTasksProvider(user.id))
+        : const AsyncValue<List<Task>>.loading();
+
+    return Scaffold(
+      backgroundColor: AppColors.lightGray,
+      appBar: AppBar(
+        title: const Text('All Tasks'),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+      ),
+      body: tasksAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.cyan),
+        ),
+        error: (e, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 12),
+                Text('Failed to load tasks: $e', textAlign: TextAlign.center),
+              ],
+            ),
+          ),
+        ),
+        data: (tasks) {
+          if (tasks.isEmpty) {
+            return const Center(
+              child: Text(
+                'No tasks yet. Tap + to create one!',
+                style: TextStyle(color: AppColors.subText),
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: tasks.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TaskDetailPage(task: task)),
+                ),
+                child: TaskCard(
+                  tagLabel: task.status?.toUpperCase() ?? 'TODO',
+                  tagColor: _getTagColor(task.status ?? 'todo'),
+                  tagTextColor: _getTagTextColor(task.status ?? 'todo'),
+                  timeLabel: task.dueAt != null
+                      ? '${task.dueAt!.day}/${task.dueAt!.month}/${task.dueAt!.year}'
+                      : 'No Due Date',
+                  title: task.title,
+                  subtitle: task.description ?? '',
+                  duration: 'N/A',
+                  showWaveform: false,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Color _getTagColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return Colors.green.withValues(alpha: 0.15);
+      case 'doing':
+        return Colors.orange.withValues(alpha: 0.15);
+      default:
+        return AppColors.redTagBg;
+    }
+  }
+
+  Color _getTagTextColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'done':
+        return Colors.green;
+      case 'doing':
+        return Colors.orange;
+      default:
+        return AppColors.redTagText;
+    }
   }
 }

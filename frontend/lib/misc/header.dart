@@ -1,11 +1,43 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../core/theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 
-class Header extends StatelessWidget {
+class Header extends ConsumerWidget {
   const Header({super.key});
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good Morning';
+    } else if (hour < 18) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
+  String _getFormattedDate() {
+    return DateFormat('EEEE, MMMM dd').format(DateTime.now());
+  }
+
+  ImageProvider? _buildAvatarImage(String? url) {
+    if (url == null || url.isEmpty) return null;
+    if (url.startsWith('data:')) {
+      final comma = url.indexOf(',');
+      if (comma == -1) return null;
+      return MemoryImage(base64Decode(url.substring(comma + 1)));
+    }
+    return NetworkImage(url);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(authProvider);
+    final userName = user?.displayName ?? user?.email.split('@')[0] ?? 'Guest';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
       child: Row(
@@ -17,46 +49,50 @@ class Header extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.cyan.withOpacity(0.2),
+                color: AppColors.cyan.withValues(alpha: 0.2),
                 width: 2,
               ),
-              image: const DecorationImage(
-                image: NetworkImage(
-                  "https://lh3.googleusercontent.com/aida-public/AB6AXuDW3Rqfn_2HqhNxsKkmK7qrOu7s0pWBzktN76f1PpP1r063Q79xXbJ2qLec0PM_YnQDAjFBDeKYZCDn5-uiu16z7Oocoq2mq2okiRvyvD3uYh25j--2ZM8pGipQzdtd0sPJ0oejhBigJHn2NeQkC9-mYmVvZEvmLPFo2Ytx-WBXL6yYePvShfYS1csmHGcy--Ta6GNyyPNg9T21amSLVHWwrabGsbd8wxIwkGSr-UB_B9PyTiHu_dkVQfioAWN0ne-ZRNqC-wotSmo",
-                ),
-                fit: BoxFit.cover,
-              ),
             ),
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.lightGray, width: 2),
-                ),
-              ),
+            child: ClipOval(
+              child: _buildAvatarImage(user?.avatarUrl) != null
+                  ? Image(
+                      key: ValueKey(user!.avatarUrl),
+                      image: _buildAvatarImage(user.avatarUrl!)!,
+                      fit: BoxFit.cover,
+                      width: 48,
+                      height: 48,
+                    )
+                  : Container(
+                      color: AppColors.lightGray,
+                      alignment: Alignment.center,
+                      child: Text(
+                        userName[0].toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.text,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 12),
           // Greeting Text
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Monday, October 24",
-                  style: TextStyle(
+                  _getFormattedDate(),
+                  style: const TextStyle(
                     color: AppColors.subText,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
-                  "Good Morning, Alex",
-                  style: TextStyle(
+                  '${_getGreeting()}, $userName',
+                  style: const TextStyle(
                     color: AppColors.text,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
