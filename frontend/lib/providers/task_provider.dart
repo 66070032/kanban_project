@@ -101,6 +101,7 @@ class TaskService {
     String filePath,
   ) async {
     try {
+      print('DEBUG: Uploading voice for task $taskId from $filePath');
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('$baseUrl/tasks/$taskId/voice-instruction'),
@@ -110,14 +111,20 @@ class TaskService {
         await http.MultipartFile.fromPath('voice_instruction', filePath),
       );
 
+      print('DEBUG: Sending multipart request to ${request.url}');
       final response = await request.send();
       final body = await response.stream.bytesToString();
+
+      print('DEBUG: Voice upload response code: ${response.statusCode}');
+      print('DEBUG: Voice upload response body: $body');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(body);
         return data['voice_instruction_url'] ?? '';
       } else {
-        throw Exception('Failed to upload voice instruction');
+        throw Exception(
+          'Failed to upload voice instruction: ${response.statusCode} - $body',
+        );
       }
     } catch (e) {
       throw Exception('Error uploading voice instruction: $e');
@@ -189,9 +196,14 @@ class TasksNotifier extends AsyncNotifier<List<Task>> {
 
   Future<bool> uploadVoiceInstruction(int taskId, String filePath) async {
     try {
+      print(
+        'DEBUG [TasksNotifier]: Calling uploadVoiceInstruction for task $taskId',
+      );
       await TaskService.uploadVoiceInstruction(taskId, filePath);
+      print('DEBUG [TasksNotifier]: Upload successful!');
       return true;
     } catch (e) {
+      print('DEBUG [TasksNotifier]: Upload failed with error: $e');
       return false;
     }
   }
