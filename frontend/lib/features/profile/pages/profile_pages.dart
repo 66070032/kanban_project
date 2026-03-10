@@ -6,6 +6,7 @@ import '../../../core/widgets/index.dart';
 import '../../auth/pages/login_page.dart';
 import '../../settings/pages/settings_page.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../services/background_sync_service.dart';
 import 'profile_tab.dart';
 
 class ProfilePage extends ConsumerWidget {
@@ -51,9 +52,12 @@ class ProfilePage extends ConsumerWidget {
               padding: const EdgeInsets.all(24.0),
               child: SecondaryButton(
                 label: 'Log Out',
-                onPressed: () {
+                onPressed: () async {
                   ref.read(authProvider.notifier).logout();
+                  await BackgroundSyncService.clearUserSession();
+                  await BackgroundSyncService.cancelAll();
 
+                  if (!context.mounted) return;
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),

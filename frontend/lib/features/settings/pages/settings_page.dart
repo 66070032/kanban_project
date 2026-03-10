@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/index.dart';
 import '../../../providers/settings_provider.dart';
+import '../../../services/notification_service.dart';
+import 'send_notification_page.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -131,6 +133,86 @@ class SettingsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 28),
 
+              // Test Notifications Section
+              SectionLabel(title: 'Test Notifications'),
+              const SizedBox(height: 8),
+              MenuContainer(
+                children: [
+                  MenuItem(
+                    icon: Icons.notifications_active,
+                    title: 'Send Instant Notification',
+                    onTap: () {
+                      NotificationService().showNotification(
+                        id: 99999,
+                        title: '\u{1F514} Test Notification',
+                        body: 'This is a test notification from Kanban App!',
+                        payload: 'test',
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Notification sent!')),
+                      );
+                    },
+                  ),
+                  CustomDivider(),
+                  MenuItem(
+                    icon: Icons.schedule,
+                    title: 'Schedule in 10 Seconds',
+                    onTap: () {
+                      NotificationService().scheduleNotification(
+                        id: 99998,
+                        title: '\u23F0 Scheduled Test',
+                        body:
+                            'This was scheduled 10 seconds ago. Notifications work!',
+                        scheduledTime:
+                            DateTime.now().add(const Duration(seconds: 10)),
+                        payload: 'scheduled_test',
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Notification scheduled in 10 seconds!',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  CustomDivider(),
+                  MenuItem(
+                    icon: Icons.phone_callback,
+                    title: 'Test Fake Incoming Call',
+                    onTap: () {
+                      NotificationService().showNotification(
+                        id: 99997,
+                        title: '\u{1F4DE} Incoming Call',
+                        body: 'Test Task \u2014 due in 5 minutes!',
+                        payload: 'Test Task',
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Fake call notification sent! Tap it to see incoming call screen.',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  CustomDivider(),
+                  MenuItem(
+                    icon: Icons.send_rounded,
+                    title: 'Send Notification to People',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SendNotificationPage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
               // About Section
               SectionLabel(title: 'About'),
               const SizedBox(height: 8),
@@ -139,7 +221,7 @@ class SettingsPage extends ConsumerWidget {
                   MenuItemWithValue(
                     icon: Icons.info_outline,
                     title: 'Version',
-                    value: '1.0.0',
+                    value: '1.2.0',
                     onTap: () {},
                   ),
                   CustomDivider(),

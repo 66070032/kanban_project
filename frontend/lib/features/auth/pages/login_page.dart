@@ -12,6 +12,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
 import '../../../main_wrapper.dart';
 import '../../../core/config/app_config.dart';
+import '../../../services/background_sync_service.dart';
 import 'register_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -206,6 +207,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         final user = User.fromJson(data["user"]);
 
         ref.read(authProvider.notifier).setUser(user);
+
+        // Persist for background sync & start periodic polling
+        await BackgroundSyncService.saveUserSession(user.id, user.displayName);
+        await BackgroundSyncService.registerPeriodicSync();
+        // Run first sync immediately
+        BackgroundSyncService.runSync();
 
         if (!mounted) return;
         Navigator.pushReplacement(

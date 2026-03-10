@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:workmanager/workmanager.dart';
 import 'auth_gate.dart';
 import 'services/notification_service.dart';
+import 'services/background_sync_service.dart';
 import 'features/task/widget/incoming_call_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -14,6 +16,9 @@ void main() async {
   } catch (_) {
     // Notifications unavailable on this platform/emulator configuration
   }
+
+  // Initialize WorkManager for background polling
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
 
   // When a reminder notification is tapped → open the incoming call screen
   NotificationService.onNotificationTap = (payload) {

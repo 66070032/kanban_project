@@ -10,6 +10,7 @@ import '../../../providers/auth_provider.dart';
 import '../../../models/user_model.dart';
 import '../../../main_wrapper.dart';
 import '../../../core/config/app_config.dart';
+import '../../../services/background_sync_service.dart';
 import '../presentation/widgets/auth_input_field.dart';
 
 class RegisterPage extends ConsumerStatefulWidget {
@@ -84,6 +85,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       if (response.statusCode == 201 && data['user'] != null) {
         final user = User.fromJson(data['user']);
         ref.read(authProvider.notifier).setUser(user);
+
+        // Persist for background sync & start periodic polling
+        await BackgroundSyncService.saveUserSession(user.id, user.displayName);
+        await BackgroundSyncService.registerPeriodicSync();
+        BackgroundSyncService.runSync();
 
         if (mounted) {
           Navigator.pushAndRemoveUntil(

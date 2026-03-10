@@ -32,6 +32,10 @@ class _MainWrapperState extends State<MainWrapper> {
       try {
         await NotificationService().requestPermissions();
       } catch (_) {}
+      // Handle notification that launched the app from terminated state
+      try {
+        await NotificationService().checkLaunchNotification();
+      } catch (_) {}
     });
   }
 

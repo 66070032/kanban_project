@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/task_model.dart';
 import '../core/config/app_config.dart';
+import '../services/notification_service.dart';
 import 'auth_provider.dart';
 
 /// Task Service Provider - Manages task API calls
@@ -128,11 +129,14 @@ class TaskService {
 }
 
 /// Riverpod Provider for tasks list (read-only fetch)
+/// Automatically schedules local notifications for tasks with due dates.
 final userTasksProvider = FutureProvider.family<List<Task>, String>((
   ref,
   userId,
 ) async {
-  return TaskService.getUserTasks(userId);
+  final tasks = await TaskService.getUserTasks(userId);
+  await NotificationService().scheduleTaskNotifications(tasks);
+  return tasks;
 });
 
 /// Riverpod Provider for single task
