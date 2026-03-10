@@ -17,23 +17,33 @@ void main() async {
     // Notifications unavailable on this platform/emulator configuration
   }
 
-  // Initialize WorkManager for background polling
+  // Initialize WorkManager as fallback for when foreground service is killed
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
 
-  // When a reminder notification is tapped → open the incoming call screen
+  // Initialize foreground task for real-time polling (like Messenger)
+  BackgroundSyncService.initForegroundTask();
+
+  // When a notification is tapped
   NotificationService.onNotificationTap = (payload) {
-    navigatorKey.currentState?.push(
-      MaterialPageRoute(
-        builder: (_) => IncomingCallScreen(
-          callerId: 'reminder',
-          callerName: 'Task Reminder',
-          callerAvatarUrl: '',
-          taskTitle: payload ?? 'You have a task reminder!',
-          onAccept: () => navigatorKey.currentState?.pop(),
-          onReject: () => navigatorKey.currentState?.pop(),
+    // Only show incoming call screen for fake-call notifications (prefixed with 'call:')
+    if (payload != null && payload.startsWith('call:')) {
+      final taskTitle = payload.substring(5); // Remove 'call:' prefix
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) => IncomingCallScreen(
+            callerId: 'reminder',
+            callerName: 'Task Reminder',
+            callerAvatarUrl: '',
+            taskTitle: taskTitle.isNotEmpty
+                ? taskTitle
+                : 'You have a task reminder!',
+            onAccept: () {},
+            onReject: () {},
+          ),
         ),
-      ),
-    );
+      );
+    }
+    // For regular notifications, do nothing special (the app is already open)
   };
 
   runApp(const ProviderScope(child: MyApp()));

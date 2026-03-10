@@ -54,6 +54,7 @@ class ProfilePage extends ConsumerWidget {
                 label: 'Log Out',
                 onPressed: () async {
                   ref.read(authProvider.notifier).logout();
+                  await BackgroundSyncService.stopForegroundService();
                   await BackgroundSyncService.clearUserSession();
                   await BackgroundSyncService.cancelAll();
 

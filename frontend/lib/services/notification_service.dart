@@ -217,7 +217,7 @@ class NotificationService {
           title: '\u{1F4DE} Incoming Call',
           body: '${reminder.title} \u2014 due in 5 minutes!',
           scheduledTime: fiveMinBefore,
-          payload: reminder.title,
+          payload: 'call:${reminder.title}',
         );
       }
     }
@@ -252,7 +252,7 @@ class NotificationService {
           title: '\u{1F4DE} Incoming Call',
           body: '${task.title} \u2014 due in 5 minutes!',
           scheduledTime: fiveMinBefore,
-          payload: task.title,
+          payload: 'call:${task.title}',
         );
       }
     }
