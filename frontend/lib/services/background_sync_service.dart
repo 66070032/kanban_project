@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,7 +21,7 @@ const _kKnownReminderIds = 'bg_known_reminder_ids';
 const backgroundSyncTask = 'com.kanban.backgroundSync';
 const backgroundSyncTaskUnique = 'com.kanban.backgroundSync.periodic';
 
-/// Top-level callback dispatcher — required by workmanager.
+/// Top-level callback dispatcher — required by workmanager (fallback).
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
@@ -31,6 +32,29 @@ void callbackDispatcher() {
       return false;
     }
   });
+}
+
+/// Top-level entry point for the foreground service isolate.
+@pragma('vm:entry-point')
+void startForegroundCallback() {
+  FlutterForegroundTask.setTaskHandler(SyncTaskHandler());
+}
+
+/// Foreground service task handler — polls every 30 seconds.
+class SyncTaskHandler extends TaskHandler {
+  @override
+  Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
+    // First sync immediately when service starts
+    await BackgroundSyncService.runSync();
+  }
+
+  @override
+  void onRepeatEvent(DateTime timestamp) async {
+    await BackgroundSyncService.runSync();
+  }
+
+  @override
+  Future<void> onDestroy(DateTime timestamp, bool isTimeout) async {}
 }
 
 /// Persists user info so background tasks can access it.
@@ -70,6 +94,43 @@ class BackgroundSyncService {
   /// Cancel all background tasks (call on logout).
   static Future<void> cancelAll() async {
     await Workmanager().cancelAll();
+  }
+
+  /// Initialize the foreground task configuration (call once in main).
+  static void initForegroundTask() {
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'kanban_foreground_service',
+        channelName: 'Kanban Sync Service',
+        channelDescription: 'Keeps checking for new tasks and messages',
+        channelImportance: NotificationChannelImportance.LOW,
+        priority: NotificationPriority.LOW,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(30000), // 30 seconds
+        autoRunOnBoot: true,
+        autoRunOnMyPackageReplaced: true,
+        allowWakeLock: true,
+        allowWifiLock: true,
+      ),
+    );
+  }
+
+  /// Start the foreground service (call after login / session restore).
+  static Future<void> startForegroundService() async {
+    if (await FlutterForegroundTask.isRunningService) return;
+    await FlutterForegroundTask.startService(
+      serviceId: 256,
+      notificationTitle: 'Kanban',
+      notificationText: 'Checking for new tasks and messages',
+      callback: startForegroundCallback,
+    );
+  }
+
+  /// Stop the foreground service (call on logout).
+  static Future<void> stopForegroundService() async {
+    await FlutterForegroundTask.stopService();
   }
 
   /// The actual sync logic — runs in background isolate.
@@ -194,6 +255,7 @@ class BackgroundSyncService {
                 title: '\u{1F4DE} Incoming Call',
                 body: '$title \u2014 due in 5 minutes!',
                 scheduledTime: fiveMinBefore,
+                taskTitle: title,
               );
             }
           }
@@ -272,6 +334,7 @@ class BackgroundSyncService {
                 title: '\u{1F4DE} Incoming Call',
                 body: '$title \u2014 due in 5 minutes!',
                 scheduledTime: fiveMinBefore,
+                taskTitle: title,
               );
             }
           }
@@ -425,6 +488,7 @@ class BackgroundSyncService {
     required String title,
     required String body,
     required DateTime scheduledTime,
+    String? taskTitle,
   }) async {
     if (scheduledTime.isBefore(DateTime.now())) return;
     await plugin.zonedSchedule(
@@ -445,6 +509,7 @@ class BackgroundSyncService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       title: title,
       body: body,
+      payload: 'call:${taskTitle ?? body}',
     );
   }
 }

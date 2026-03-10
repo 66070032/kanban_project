@@ -89,6 +89,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         // Persist for background sync & start periodic polling
         await BackgroundSyncService.saveUserSession(user.id, user.displayName);
         await BackgroundSyncService.registerPeriodicSync();
+        await BackgroundSyncService.startForegroundService();
         BackgroundSyncService.runSync();
 
         if (mounted) {

@@ -211,6 +211,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         // Persist for background sync & start periodic polling
         await BackgroundSyncService.saveUserSession(user.id, user.displayName);
         await BackgroundSyncService.registerPeriodicSync();
+        await BackgroundSyncService.startForegroundService();
         // Run first sync immediately
         BackgroundSyncService.runSync();
 

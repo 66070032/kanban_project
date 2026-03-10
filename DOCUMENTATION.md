@@ -72,11 +72,14 @@
 - ไม่ส่งรหัสผ่านกลับไปที่ client
 
 **โค้ดสำคัญ (Backend — auth.controller.js):**
+
 ```javascript
 // การ Login — ตรวจสอบรหัสผ่านด้วย bcrypt
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  const { rows } = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+  const { rows } = await pool.query("SELECT * FROM users WHERE email = $1", [
+    email,
+  ]);
   const isMatch = await bcrypt.compare(password, user.password);
   // ส่งข้อมูลผู้ใช้กลับ (ไม่รวม password)
   const { password: _, ...userWithoutPassword } = user;
@@ -88,12 +91,13 @@ exports.register = async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 10);
   await pool.query(
     `INSERT INTO users (email, display_name, password) VALUES ($1, $2, $3)`,
-    [email, name, passwordHash]
+    [email, name, passwordHash],
   );
 };
 ```
 
 **โค้ดสำคัญ (Frontend — auth_gate.dart):**
+
 ```dart
 // AuthGate ควบคุมการเข้าถึง — ถ้าไม่ได้ login จะเห็นหน้า Login
 class AuthGate extends ConsumerWidget {
@@ -113,6 +117,7 @@ class AuthGate extends ConsumerWidget {
 - **ลบงาน (Delete)** — ลบงานที่ไม่ต้องการ
 
 **โค้ดสำคัญ (Backend — task.controller.js):**
+
 ```javascript
 // สร้าง Task
 exports.createTask = async (req, res) => {
@@ -120,7 +125,7 @@ exports.createTask = async (req, res) => {
   const { rows } = await pool.query(
     `INSERT INTO tasks (title, description, assignee_id, status, due_at)
      VALUES ($1, $2, $3, COALESCE($4, 'todo'), $5) RETURNING *`,
-    [title, description, assignee_id, status, due_at || null]
+    [title, description, assignee_id, status, due_at || null],
   );
   res.status(201).json(rows[0]);
 };
@@ -139,6 +144,7 @@ exports.getTasks = async (req, res) => {
 ```
 
 **โค้ดสำคัญ (Frontend — task_provider.dart):**
+
 ```dart
 // Provider สำหรับดึง Tasks ของผู้ใช้
 final userTasksProvider = FutureProvider.family<List<Task>, String>((ref, userId) async {
@@ -171,6 +177,7 @@ class TasksNotifier extends AsyncNotifier<List<Task>> {
 - รองรับ CRUD (สร้าง, ดู, แก้ไข, ลบ)
 
 **โค้ดสำคัญ (Frontend — notification_service.dart):**
+
 ```dart
 class NotificationService {
   // ตั้งเวลาแจ้งเตือนล่วงหน้า
@@ -207,12 +214,14 @@ class NotificationService {
 ฟีเจอร์ที่โดดเด่นที่สุดของแอป — สามารถบันทึกเสียงคำสั่งแนบไปกับงานได้
 
 **ขั้นตอนการทำงาน:**
+
 1. กดปุ่มบันทึกเสียงบนหน้าสร้าง/ดูงาน
 2. บันทึกเสียงจากไมโครโฟนจริง → ไฟล์ .m4a
 3. อัปโหลดไฟล์เสียงผ่าน Multipart API → เก็บใน server ด้วยชื่อ UUID
 4. เปิดฟังเสียงกลับมาได้ พร้อม Play/Pause/Seek
 
 **โค้ดสำคัญ (Frontend — audio_recording_service.dart):**
+
 ```dart
 class AudioRecordingService {
   final AudioRecorder _recorder = AudioRecorder();
@@ -232,27 +241,29 @@ class AudioRecordingService {
 ```
 
 **โค้ดสำคัญ (Backend — multer middleware):**
+
 ```javascript
 // รับไฟล์เสียงผ่าน Multer พร้อม validate ประเภทไฟล์
 const upload = multer({
   storage: multer.diskStorage({
-    destination: './uploads',
-    filename: (req, file, cb) => cb(null, `${uuidv4()}_${Date.now()}.m4a`)
+    destination: "./uploads",
+    filename: (req, file, cb) => cb(null, `${uuidv4()}_${Date.now()}.m4a`),
   }),
   fileFilter: (req, file, cb) => {
     // รองรับ: .m4a, .mp3, .wav, .aac, .ogg, .flac
-  }
+  },
 });
 ```
 
 **โค้ดสำคัญ (Backend — อัปโหลด voice instruction):**
+
 ```javascript
 exports.uploadVoiceInstruction = async (req, res) => {
   const { id } = req.params;
   const uuid = req.file.filename;
   await pool.query(
     "UPDATE tasks SET voice_instruction_uuid = $1 WHERE id = $2",
-    [uuid, id]
+    [uuid, id],
   );
   res.json({ url: `/uploads/${uuid}` });
 };
@@ -263,12 +274,14 @@ exports.uploadVoiceInstruction = async (req, res) => {
 เมื่อถึงเวลาที่ตั้ง Reminder ไว้ แอปจะแสดงหน้าจอเหมือนมีสายเข้า (Incoming Call) พร้อม Animation
 
 **คุณสมบัติ:**
+
 - Avatar ขนาดใหญ่พร้อม **Pulse Animation** (เต้นตามจังหวะ)
 - แสดงชื่อผู้ส่งและหัวข้องาน
 - นับถอยหลัง 30 วินาที — ถ้าไม่ตอบจะ auto-reject
 - ปุ่ม ❌ ปฏิเสธ (แดง) และ ✅ รับ (เขียว)
 
 **โค้ดสำคัญ (Frontend — incoming_call_screen.dart):**
+
 ```dart
 class IncomingCallScreen extends StatefulWidget {
   final String callerName;
@@ -290,6 +303,7 @@ class IncomingCallScreen extends StatefulWidget {
 ```
 
 **การเชื่อมต่อกับ Notification (main.dart):**
+
 ```dart
 NotificationService.onNotificationTap = (payload) {
   navigatorKey.currentState?.push(MaterialPageRoute(
@@ -309,6 +323,7 @@ NotificationService.onNotificationTap = (payload) {
 ระบบแชทกลุ่มที่สามารถสร้างงานและส่งเป็นข้อความในกลุ่มได้
 
 **คุณสมบัติ:**
+
 - สร้างกลุ่ม พร้อมเพิ่ม/ลบสมาชิก
 - ค้นหาผู้ใช้เพื่อเพิ่มเข้ากลุ่ม
 - ส่งข้อความแบบทั่วไป (text) และแบบงาน (task)
@@ -320,6 +335,7 @@ NotificationService.onNotificationTap = (payload) {
 - Cursor-based pagination สำหรับข้อความ
 
 **โค้ดสำคัญ (Backend — สร้าง Task + Message ในกลุ่ม):**
+
 ```javascript
 exports.sendTaskMessage = async (req, res) => {
   const client = await pool.connect();
@@ -329,14 +345,14 @@ exports.sendTaskMessage = async (req, res) => {
   const taskResult = await client.query(
     `INSERT INTO tasks (title, description, assignee_id, status, due_at, group_id)
      VALUES ($1, $2, $3, 'todo', $4, $5) RETURNING *`,
-    [title, description, assignee_id, due_at, groupId]
+    [title, description, assignee_id, due_at, groupId],
   );
 
   // 2. สร้างข้อความประเภท 'task' ในกลุ่ม
   await client.query(
     `INSERT INTO messages (group_id, sender_id, content, message_type, task_id)
      VALUES ($1, $2, $3, 'task', $4)`,
-    [groupId, senderId, messageContent, task.id]
+    [groupId, senderId, messageContent, task.id],
   );
 
   await client.query("COMMIT");
@@ -355,6 +371,7 @@ exports.sendTaskMessage = async (req, res) => {
 ### 4.5 🔄 State Management ด้วย Riverpod + AsyncValue
 
 ใช้ Riverpod สำหรับจัดการ State ทั้งหมด พร้อมรองรับ 3 สถานะอัตโนมัติ:
+
 - `loading` → แสดง Loading Spinner
 - `error` → แสดงข้อผิดพลาด
 - `data` → แสดงข้อมูล
@@ -474,131 +491,143 @@ const upload = multer({
 ## 6. API Endpoints ทั้งหมด
 
 ### Authentication (การยืนยันตัวตน)
-| Method | Endpoint | คำอธิบาย |
-|--------|----------|----------|
-| POST | `/auth/register` | สมัครสมาชิก |
-| POST | `/auth/login` | เข้าสู่ระบบ |
+
+| Method | Endpoint         | คำอธิบาย    |
+| ------ | ---------------- | ----------- |
+| POST   | `/auth/register` | สมัครสมาชิก |
+| POST   | `/auth/login`    | เข้าสู่ระบบ |
 
 ### Users (ผู้ใช้)
-| Method | Endpoint | คำอธิบาย |
-|--------|----------|----------|
-| GET | `/users` | ดูผู้ใช้ทั้งหมด |
-| GET | `/users/:id` | ดูผู้ใช้ตาม ID |
-| PUT | `/users/:id` | แก้ไขข้อมูลผู้ใช้ |
-| PUT | `/users/:id/password` | เปลี่ยนรหัสผ่าน |
-| POST | `/users/:id/avatar` | อัปโหลดรูปโปรไฟล์ |
-| DELETE | `/users/:id` | ลบบัญชีผู้ใช้ |
+
+| Method | Endpoint              | คำอธิบาย          |
+| ------ | --------------------- | ----------------- |
+| GET    | `/users`              | ดูผู้ใช้ทั้งหมด   |
+| GET    | `/users/:id`          | ดูผู้ใช้ตาม ID    |
+| PUT    | `/users/:id`          | แก้ไขข้อมูลผู้ใช้ |
+| PUT    | `/users/:id/password` | เปลี่ยนรหัสผ่าน   |
+| POST   | `/users/:id/avatar`   | อัปโหลดรูปโปรไฟล์ |
+| DELETE | `/users/:id`          | ลบบัญชีผู้ใช้     |
 
 ### Tasks (งาน)
-| Method | Endpoint | คำอธิบาย |
-|--------|----------|----------|
-| GET | `/tasks` | ดูงานทั้งหมด |
-| POST | `/tasks` | สร้างงานใหม่ |
-| GET | `/tasks/:id` | ดูงานตาม ID |
-| PUT | `/tasks/:id` | แก้ไขงาน |
-| DELETE | `/tasks/:id` | ลบงาน |
-| GET | `/tasks/assignee/:assignee_id` | ดูงานตามผู้รับผิดชอบ |
-| GET | `/tasks/group/:group_id` | ดูงานตามกลุ่ม |
-| POST | `/tasks/:id/voice-instruction` | อัปโหลดเสียงคำสั่ง |
-| GET | `/tasks/:id/voice-instruction` | ดึงเสียงคำสั่ง |
+
+| Method | Endpoint                       | คำอธิบาย             |
+| ------ | ------------------------------ | -------------------- |
+| GET    | `/tasks`                       | ดูงานทั้งหมด         |
+| POST   | `/tasks`                       | สร้างงานใหม่         |
+| GET    | `/tasks/:id`                   | ดูงานตาม ID          |
+| PUT    | `/tasks/:id`                   | แก้ไขงาน             |
+| DELETE | `/tasks/:id`                   | ลบงาน                |
+| GET    | `/tasks/assignee/:assignee_id` | ดูงานตามผู้รับผิดชอบ |
+| GET    | `/tasks/group/:group_id`       | ดูงานตามกลุ่ม        |
+| POST   | `/tasks/:id/voice-instruction` | อัปโหลดเสียงคำสั่ง   |
+| GET    | `/tasks/:id/voice-instruction` | ดึงเสียงคำสั่ง       |
 
 ### Reminders (การแจ้งเตือน)
-| Method | Endpoint | คำอธิบาย |
-|--------|----------|----------|
-| GET | `/reminders/user/:userId` | ดู Reminder ของผู้ใช้ |
-| GET | `/reminders/:id` | ดู Reminder ตาม ID |
-| POST | `/reminders` | สร้าง Reminder ใหม่ |
-| PUT | `/reminders/:id` | แก้ไข Reminder |
-| DELETE | `/reminders/:id` | ลบ Reminder |
+
+| Method | Endpoint                  | คำอธิบาย              |
+| ------ | ------------------------- | --------------------- |
+| GET    | `/reminders/user/:userId` | ดู Reminder ของผู้ใช้ |
+| GET    | `/reminders/:id`          | ดู Reminder ตาม ID    |
+| POST   | `/reminders`              | สร้าง Reminder ใหม่   |
+| PUT    | `/reminders/:id`          | แก้ไข Reminder        |
+| DELETE | `/reminders/:id`          | ลบ Reminder           |
 
 ### Groups (กลุ่ม)
-| Method | Endpoint | คำอธิบาย |
-|--------|----------|----------|
-| POST | `/groups` | สร้างกลุ่มใหม่ |
-| GET | `/groups/user/:userId` | ดูกลุ่มของผู้ใช้ |
-| GET | `/groups/:id` | ดูกลุ่มตาม ID |
-| PUT | `/groups/:id` | แก้ไขกลุ่ม |
-| DELETE | `/groups/:id` | ลบกลุ่ม |
-| GET | `/groups/:id/members` | ดูสมาชิกในกลุ่ม |
-| POST | `/groups/:id/members` | เพิ่มสมาชิก |
-| DELETE | `/groups/:id/members/:userId` | ลบสมาชิก |
-| GET | `/groups/:id/search-users` | ค้นหาผู้ใช้เพื่อเพิ่มเข้ากลุ่ม |
-| GET | `/groups/:id/messages` | ดูข้อความในกลุ่ม (Paginated) |
-| POST | `/groups/:id/messages` | ส่งข้อความ |
-| POST | `/groups/:id/messages/task` | ส่งข้อความพร้อมสร้างงาน |
+
+| Method | Endpoint                      | คำอธิบาย                       |
+| ------ | ----------------------------- | ------------------------------ |
+| POST   | `/groups`                     | สร้างกลุ่มใหม่                 |
+| GET    | `/groups/user/:userId`        | ดูกลุ่มของผู้ใช้               |
+| GET    | `/groups/:id`                 | ดูกลุ่มตาม ID                  |
+| PUT    | `/groups/:id`                 | แก้ไขกลุ่ม                     |
+| DELETE | `/groups/:id`                 | ลบกลุ่ม                        |
+| GET    | `/groups/:id/members`         | ดูสมาชิกในกลุ่ม                |
+| POST   | `/groups/:id/members`         | เพิ่มสมาชิก                    |
+| DELETE | `/groups/:id/members/:userId` | ลบสมาชิก                       |
+| GET    | `/groups/:id/search-users`    | ค้นหาผู้ใช้เพื่อเพิ่มเข้ากลุ่ม |
+| GET    | `/groups/:id/messages`        | ดูข้อความในกลุ่ม (Paginated)   |
+| POST   | `/groups/:id/messages`        | ส่งข้อความ                     |
+| POST   | `/groups/:id/messages/task`   | ส่งข้อความพร้อมสร้างงาน        |
 
 ### Health Check
-| Method | Endpoint | คำอธิบาย |
-|--------|----------|----------|
-| GET | `/health` | ตรวจสอบสถานะ Server |
+
+| Method | Endpoint  | คำอธิบาย            |
+| ------ | --------- | ------------------- |
+| GET    | `/health` | ตรวจสอบสถานะ Server |
 
 ---
 
 ## 7. โครงสร้างฐานข้อมูล
 
 ### ตาราง users (ผู้ใช้)
-| Column | Type | คำอธิบาย |
-|--------|------|----------|
-| id | UUID | Primary Key |
-| email | VARCHAR | อีเมล (unique) |
-| display_name | VARCHAR | ชื่อที่แสดง |
-| password | VARCHAR | รหัสผ่าน (bcrypt hash) |
-| avatar_url | VARCHAR | URL รูปโปรไฟล์ |
-| created_at | TIMESTAMP | วันที่สร้าง |
+
+| Column       | Type      | คำอธิบาย               |
+| ------------ | --------- | ---------------------- |
+| id           | UUID      | Primary Key            |
+| email        | VARCHAR   | อีเมล (unique)         |
+| display_name | VARCHAR   | ชื่อที่แสดง            |
+| password     | VARCHAR   | รหัสผ่าน (bcrypt hash) |
+| avatar_url   | VARCHAR   | URL รูปโปรไฟล์         |
+| created_at   | TIMESTAMP | วันที่สร้าง            |
 
 ### ตาราง tasks (งาน)
-| Column | Type | คำอธิบาย |
-|--------|------|----------|
-| id | SERIAL | Primary Key |
-| title | VARCHAR | ชื่องาน |
-| description | TEXT | คำอธิบาย |
-| status | VARCHAR | สถานะ (todo/doing/done) |
-| assignee_id | UUID | FK → users.id (ผู้รับผิดชอบ) |
-| group_id | INT | FK → groups.id (กลุ่ม) |
-| due_at | TIMESTAMP | กำหนดส่ง |
-| voice_instruction_uuid | VARCHAR | ชื่อไฟล์เสียง |
-| created_at | TIMESTAMP | วันที่สร้าง |
-| updated_at | TIMESTAMP | วันที่อัปเดต |
+
+| Column                 | Type      | คำอธิบาย                     |
+| ---------------------- | --------- | ---------------------------- |
+| id                     | SERIAL    | Primary Key                  |
+| title                  | VARCHAR   | ชื่องาน                      |
+| description            | TEXT      | คำอธิบาย                     |
+| status                 | VARCHAR   | สถานะ (todo/doing/done)      |
+| assignee_id            | UUID      | FK → users.id (ผู้รับผิดชอบ) |
+| group_id               | INT       | FK → groups.id (กลุ่ม)       |
+| due_at                 | TIMESTAMP | กำหนดส่ง                     |
+| voice_instruction_uuid | VARCHAR   | ชื่อไฟล์เสียง                |
+| created_at             | TIMESTAMP | วันที่สร้าง                  |
+| updated_at             | TIMESTAMP | วันที่อัปเดต                 |
 
 ### ตาราง reminders (การแจ้งเตือน)
-| Column | Type | คำอธิบาย |
-|--------|------|----------|
-| id | SERIAL | Primary Key |
-| user_id | UUID | FK → users.id |
-| title | VARCHAR | หัวข้อ |
-| description | TEXT | คำอธิบาย |
-| due_date | TIMESTAMP | วันเวลาแจ้งเตือน |
-| is_completed | BOOLEAN | เสร็จแล้วหรือยัง |
-| is_sent | BOOLEAN | ส่งแจ้งเตือนแล้วหรือยัง |
+
+| Column       | Type      | คำอธิบาย                |
+| ------------ | --------- | ----------------------- |
+| id           | SERIAL    | Primary Key             |
+| user_id      | UUID      | FK → users.id           |
+| title        | VARCHAR   | หัวข้อ                  |
+| description  | TEXT      | คำอธิบาย                |
+| due_date     | TIMESTAMP | วันเวลาแจ้งเตือน        |
+| is_completed | BOOLEAN   | เสร็จแล้วหรือยัง        |
+| is_sent      | BOOLEAN   | ส่งแจ้งเตือนแล้วหรือยัง |
 
 ### ตาราง groups (กลุ่ม)
-| Column | Type | คำอธิบาย |
-|--------|------|----------|
-| id | SERIAL | Primary Key |
-| name | VARCHAR | ชื่อกลุ่ม |
-| description | TEXT | คำอธิบาย |
-| created_by | UUID | FK → users.id (ผู้สร้าง) |
-| created_at | TIMESTAMP | วันที่สร้าง |
+
+| Column      | Type      | คำอธิบาย                 |
+| ----------- | --------- | ------------------------ |
+| id          | SERIAL    | Primary Key              |
+| name        | VARCHAR   | ชื่อกลุ่ม                |
+| description | TEXT      | คำอธิบาย                 |
+| created_by  | UUID      | FK → users.id (ผู้สร้าง) |
+| created_at  | TIMESTAMP | วันที่สร้าง              |
 
 ### ตาราง group_members (สมาชิกกลุ่ม)
-| Column | Type | คำอธิบาย |
-|--------|------|----------|
-| id | SERIAL | Primary Key |
-| group_id | INT | FK → groups.id |
-| user_id | UUID | FK → users.id |
-| role | VARCHAR | บทบาท (admin/member) |
-| joined_at | TIMESTAMP | วันที่เข้าร่วม |
+
+| Column    | Type      | คำอธิบาย             |
+| --------- | --------- | -------------------- |
+| id        | SERIAL    | Primary Key          |
+| group_id  | INT       | FK → groups.id       |
+| user_id   | UUID      | FK → users.id        |
+| role      | VARCHAR   | บทบาท (admin/member) |
+| joined_at | TIMESTAMP | วันที่เข้าร่วม       |
 
 ### ตาราง messages (ข้อความ)
-| Column | Type | คำอธิบาย |
-|--------|------|----------|
-| id | SERIAL | Primary Key |
-| group_id | INT | FK → groups.id |
-| sender_id | UUID | FK → users.id |
-| content | TEXT | เนื้อหาข้อความ |
-| message_type | VARCHAR | ประเภท (text/task) |
-| task_id | INT | FK → tasks.id (เฉพาะประเภท task) |
-| created_at | TIMESTAMP | วันที่ส่ง |
+
+| Column       | Type      | คำอธิบาย                         |
+| ------------ | --------- | -------------------------------- |
+| id           | SERIAL    | Primary Key                      |
+| group_id     | INT       | FK → groups.id                   |
+| sender_id    | UUID      | FK → users.id                    |
+| content      | TEXT      | เนื้อหาข้อความ                   |
+| message_type | VARCHAR   | ประเภท (text/task)               |
+| task_id      | INT       | FK → tasks.id (เฉพาะประเภท task) |
+| created_at   | TIMESTAMP | วันที่ส่ง                        |
 
 ---
 
@@ -695,39 +724,42 @@ kanban_project/
 ## 9. เทคโนโลยีที่ใช้
 
 ### Frontend
-| เทคโนโลยี | วัตถุประสงค์ |
-|-----------|-------------|
-| Flutter (Dart) | Framework สร้างแอป Cross-platform |
-| flutter_riverpod 3.2 | State Management |
-| http | เรียก RESTful API |
-| record | บันทึกเสียงจากไมโครโฟน |
-| just_audio | เล่นไฟล์เสียง |
-| flutter_local_notifications | แจ้งเตือน Local |
-| path_provider | จัดการ File Path |
-| google_fonts | ฟอนต์ Plus Jakarta Sans |
-| intl | จัดรูปแบบวันที่ |
-| image_picker | เลือกรูปภาพ |
-| permission_handler | ขอสิทธิ์ (ไมค์, แจ้งเตือน) |
-| timezone | Timezone สำหรับ Notification |
+
+| เทคโนโลยี                   | วัตถุประสงค์                      |
+| --------------------------- | --------------------------------- |
+| Flutter (Dart)              | Framework สร้างแอป Cross-platform |
+| flutter_riverpod 3.2        | State Management                  |
+| http                        | เรียก RESTful API                 |
+| record                      | บันทึกเสียงจากไมโครโฟน            |
+| just_audio                  | เล่นไฟล์เสียง                     |
+| flutter_local_notifications | แจ้งเตือน Local                   |
+| path_provider               | จัดการ File Path                  |
+| google_fonts                | ฟอนต์ Plus Jakarta Sans           |
+| intl                        | จัดรูปแบบวันที่                   |
+| image_picker                | เลือกรูปภาพ                       |
+| permission_handler          | ขอสิทธิ์ (ไมค์, แจ้งเตือน)        |
+| timezone                    | Timezone สำหรับ Notification      |
 
 ### Backend
-| เทคโนโลยี | วัตถุประสงค์ |
-|-----------|-------------|
-| Express.js | Web Framework |
-| PostgreSQL | ฐานข้อมูล Relational |
-| pg (node-postgres) | เชื่อมต่อ PostgreSQL |
-| bcrypt | เข้ารหัสรหัสผ่าน |
-| multer | อัปโหลดไฟล์ (เสียง, รูป) |
-| uuid | สร้างชื่อไฟล์ Unique |
-| cors | Cross-Origin Resource Sharing |
-| morgan | HTTP Request Logging |
-| dotenv | Environment Variables |
+
+| เทคโนโลยี          | วัตถุประสงค์                  |
+| ------------------ | ----------------------------- |
+| Express.js         | Web Framework                 |
+| PostgreSQL         | ฐานข้อมูล Relational          |
+| pg (node-postgres) | เชื่อมต่อ PostgreSQL          |
+| bcrypt             | เข้ารหัสรหัสผ่าน              |
+| multer             | อัปโหลดไฟล์ (เสียง, รูป)      |
+| uuid               | สร้างชื่อไฟล์ Unique          |
+| cors               | Cross-Origin Resource Sharing |
+| morgan             | HTTP Request Logging          |
+| dotenv             | Environment Variables         |
 
 ---
 
 ## 10. วิธีรันโปรเจกต์
 
 ### Backend
+
 ```bash
 cd backend
 npm install
@@ -738,6 +770,7 @@ npm start
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 flutter pub get
@@ -746,6 +779,7 @@ flutter run
 ```
 
 ### ตรวจสอบ Server
+
 ```bash
 curl https://kanban.jokeped.xyz/health
 # ควรได้: {"status":"ok"}
@@ -755,11 +789,11 @@ curl https://kanban.jokeped.xyz/health
 
 ## สรุปจุดเด่นของโปรเจกต์
 
-| หมวด | สิ่งที่ทำได้ |
-|------|------------|
-| **Core Features** | Auth, Task CRUD, Calendar, Reminder, Group Chat, Profile |
-| **App Flow & UX** | Create → View → Edit → Delete ครบ, Bottom Nav 4 หน้า, Pull-to-refresh |
-| **Data Handling** | CRUD/State ด้วย Riverpod + AsyncValue, UI อัปเดตอัตโนมัติ |
-| **Persistence/Backend** | PostgreSQL + Express.js API, ข้อมูลคงอยู่หลังปิดแอป |
-| **Error/Edge Cases** | Loading state, Error state, Empty state, Validation ครบ |
-| **ฟีเจอร์พิเศษ** | บันทึกเสียง, Incoming Call Screen, Group Task Sharing |
+| หมวด                    | สิ่งที่ทำได้                                                          |
+| ----------------------- | --------------------------------------------------------------------- |
+| **Core Features**       | Auth, Task CRUD, Calendar, Reminder, Group Chat, Profile              |
+| **App Flow & UX**       | Create → View → Edit → Delete ครบ, Bottom Nav 4 หน้า, Pull-to-refresh |
+| **Data Handling**       | CRUD/State ด้วย Riverpod + AsyncValue, UI อัปเดตอัตโนมัติ             |
+| **Persistence/Backend** | PostgreSQL + Express.js API, ข้อมูลคงอยู่หลังปิดแอป                   |
+| **Error/Edge Cases**    | Loading state, Error state, Empty state, Validation ครบ               |
+| **ฟีเจอร์พิเศษ**        | บันทึกเสียง, Incoming Call Screen, Group Task Sharing                 |

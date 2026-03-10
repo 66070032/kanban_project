@@ -29,6 +29,7 @@ class _AuthGateState extends ConsumerState<AuthGate> {
       if (user != null) {
         await BackgroundSyncService.saveUserSession(user.id, user.displayName);
         await BackgroundSyncService.registerPeriodicSync();
+        await BackgroundSyncService.startForegroundService();
         BackgroundSyncService.runSync();
       }
     }
@@ -38,9 +39,7 @@ class _AuthGateState extends ConsumerState<AuthGate> {
   @override
   Widget build(BuildContext context) {
     if (_isChecking) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final user = ref.watch(authProvider);
