@@ -247,12 +247,14 @@ class NotificationService {
       // 5-minute-before incoming-call notification
       final fiveMinBefore = task.dueAt!.subtract(const Duration(minutes: 5));
       if (fiveMinBefore.isAfter(now)) {
+        // Include voice instruction URL in payload so the call screen can play it
+        final voiceUrl = task.voiceInstructionUrl ?? '';
         await _scheduleCallNotification(
           id: baseId + 100000, // 200000+ range
           title: '\u{1F4DE} Incoming Call',
           body: '${task.title} \u2014 due in 5 minutes!',
           scheduledTime: fiveMinBefore,
-          payload: 'call:${task.title}',
+          payload: 'call:${task.title}\x1F$voiceUrl',
         );
       }
     }

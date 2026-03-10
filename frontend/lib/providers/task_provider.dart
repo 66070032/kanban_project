@@ -1,14 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/task_model.dart';
 import '../core/config/app_config.dart';
 import '../services/notification_service.dart';
+import '../services/connectivity_service.dart';
 import 'auth_provider.dart';
 
 /// Task Service Provider - Manages task API calls
 class TaskService {
   static String get baseUrl => AppConfig.baseUrl;
+  static const String _cacheKey = 'cached_tasks';
+
+  /// Save tasks to local cache
+  static Future<void> _cacheTasks(String userId, List<dynamic> jsonData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('${_cacheKey}_$userId', jsonEncode(jsonData));
+  }
+
+  /// Load cached tasks
+  static Future<List<Task>> _getCachedTasks(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final cached = prefs.getString('${_cacheKey}_$userId');
+    if (cached != null) {
+      final List<dynamic> data = jsonDecode(cached);
+      return data.map((task) => Task.fromJson(task)).toList();
+    }
+    return [];
+  }
 
   static Future<List<Task>> getUserTasks(String userId) async {
     try {
@@ -18,11 +38,20 @@ class TaskService {
 
       if (res.statusCode == 200) {
         final List<dynamic> data = jsonDecode(res.body);
+        // Cache the raw JSON for offline use
+        await _cacheTasks(userId, data);
         return data.map((task) => Task.fromJson(task)).toList();
       } else {
         throw Exception('Failed to load tasks: ${res.statusCode}');
       }
     } catch (e) {
+      // If offline or error, return cached tasks
+      if (!ConnectivityService().isOnline) {
+        return _getCachedTasks(userId);
+      }
+      // Try cache as fallback even if online (network error)
+      final cached = await _getCachedTasks(userId);
+      if (cached.isNotEmpty) return cached;
       throw Exception('Error fetching tasks: $e');
     }
   }

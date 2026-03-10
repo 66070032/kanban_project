@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -120,9 +121,23 @@ class BackgroundSyncService {
     await FlutterForegroundTask.stopService();
   }
 
+  /// Check if device has internet
+  static Future<bool> _hasInternet() async {
+    try {
+      final result = await InternetAddress.lookup('google.com')
+          .timeout(const Duration(seconds: 5));
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// The actual sync logic — runs in background isolate.
   /// Delegates to specialized sync services to keep code modular.
   static Future<void> runSync() async {
+    // Skip sync if offline
+    if (!await _hasInternet()) return;
+
     tz_data.initializeTimeZones();
 
     final prefs = await SharedPreferences.getInstance();

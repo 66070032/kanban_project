@@ -28,7 +28,12 @@ class AudioRecordingService {
         '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
     await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000),
+      const RecordConfig(
+        encoder: AudioEncoder.aacLc,
+        bitRate: 256000,
+        sampleRate: 44100,
+        numChannels: 2,
+      ),
       path: path,
     );
     _isRecording = true;

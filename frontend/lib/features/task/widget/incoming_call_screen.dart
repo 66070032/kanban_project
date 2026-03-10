@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
 /// Incoming Call Screen
-/// Simulates an incoming phone call notification UI for task reminders
+/// Simulates an incoming phone call notification UI for task reminders.
+/// Plays the task's voice instruction audio (if available) on loop while ringing.
 class IncomingCallScreen extends StatefulWidget {
   final String callerId;
   final String callerName;
@@ -10,6 +12,7 @@ class IncomingCallScreen extends StatefulWidget {
   final Function onAccept;
   final Function onReject;
   final Duration autoRejectAfter;
+  final String? voiceInstructionUrl;
 
   const IncomingCallScreen({
     super.key,
@@ -20,6 +23,7 @@ class IncomingCallScreen extends StatefulWidget {
     required this.onAccept,
     required this.onReject,
     this.autoRejectAfter = const Duration(seconds: 30),
+    this.voiceInstructionUrl,
   });
 
   @override
@@ -31,6 +35,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   late AnimationController _pulseController;
   late AnimationController _countdownController;
   int _secondsRemaining = 30;
+  AudioPlayer? _audioPlayer;
 
   @override
   void initState() {
@@ -54,6 +59,30 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
 
     // Update countdown display every second
     _startCountdown();
+
+    // Play voice instruction audio if available
+    _startAudio();
+  }
+
+  Future<void> _startAudio() async {
+    final url = widget.voiceInstructionUrl;
+    if (url == null || url.isEmpty) return;
+    try {
+      _audioPlayer = AudioPlayer();
+      await _audioPlayer!.setUrl(url);
+      await _audioPlayer!.setLoopMode(LoopMode.one);
+      await _audioPlayer!.play();
+    } catch (_) {
+      // Audio playback is best-effort; don't crash the screen
+    }
+  }
+
+  Future<void> _stopAudio() async {
+    try {
+      await _audioPlayer?.stop();
+      await _audioPlayer?.dispose();
+    } catch (_) {}
+    _audioPlayer = null;
   }
 
   void _startCountdown() {
@@ -69,6 +98,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
 
   @override
   void dispose() {
+    _stopAudio();
     _pulseController.dispose();
     _countdownController.dispose();
     super.dispose();
@@ -77,6 +107,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   Future<void> _handleAccept() async {
     _pulseController.stop();
     _countdownController.stop();
+    await _stopAudio();
 
     // Close overlay and call callback
     if (mounted) {
@@ -88,6 +119,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   Future<void> _handleReject() async {
     _pulseController.stop();
     _countdownController.stop();
+    await _stopAudio();
 
     // Close overlay and call callback
     if (mounted) {
@@ -243,6 +275,7 @@ Future<void> showIncomingCallOverlay({
   required String taskTitle,
   required Function onAccept,
   required Function onReject,
+  String? voiceInstructionUrl,
 }) async {
   await Navigator.push(
     context,
@@ -254,6 +287,7 @@ Future<void> showIncomingCallOverlay({
         taskTitle: taskTitle,
         onAccept: onAccept,
         onReject: onReject,
+        voiceInstructionUrl: voiceInstructionUrl,
       ),
       fullscreenDialog: true,
     ),

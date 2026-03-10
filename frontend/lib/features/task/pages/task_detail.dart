@@ -246,6 +246,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                         audioUrl: _voiceInstructionPath,
                         title: 'Voice Instruction',
                         accentColor: Colors.cyan[400]!,
+                        onDelete: () {
+                          setState(() {
+                            _voiceInstructionPath = null;
+                          });
+                        },
                       )
                     else if (_voiceInstructionPath != null)
                       // New recording - use as local file path
@@ -253,6 +258,11 @@ class _TaskDetailPageState extends ConsumerState<TaskDetailPage> {
                         audioPath: _voiceInstructionPath!,
                         title: 'Voice Instruction',
                         accentColor: Colors.cyan[400]!,
+                        onDelete: () {
+                          setState(() {
+                            _voiceInstructionPath = null;
+                          });
+                        },
                       )
                     else
                       // No voice - show recorder

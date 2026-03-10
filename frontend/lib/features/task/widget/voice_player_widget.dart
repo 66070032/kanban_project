@@ -11,6 +11,7 @@ class VoicePlayerWidget extends StatefulWidget {
   final String title;
   final Color accentColor;
   final bool autoPlay;
+  final VoidCallback? onDelete;
 
   const VoicePlayerWidget({
     super.key,
@@ -19,6 +20,7 @@ class VoicePlayerWidget extends StatefulWidget {
     this.title = 'Voice Message',
     this.accentColor = const Color(0xFF00BCD4),
     this.autoPlay = false,
+    this.onDelete,
   });
 
   @override
@@ -27,12 +29,13 @@ class VoicePlayerWidget extends StatefulWidget {
 
 class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
   late AudioPlayer _player;
-  AudioState _audioState = AudioState.stopped;
+  AudioState _audioState = AudioState.loading;
   Duration _duration = Duration.zero;
   Duration _currentPosition = Duration.zero;
   StreamSubscription<Duration>? _positionSub;
   StreamSubscription<Duration?>? _durationSub;
   StreamSubscription<PlayerState>? _stateSub;
+  bool _sourceLoaded = false;
 
   @override
   void initState() {
@@ -54,18 +57,40 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
           _audioState = AudioState.stopped;
           _currentPosition = Duration.zero;
           _player.seek(Duration.zero);
+          _player.pause();
         } else if (s.processingState == ProcessingState.loading ||
             s.processingState == ProcessingState.buffering) {
           _audioState = AudioState.loading;
         } else if (s.playing) {
           _audioState = AudioState.playing;
-        } else {
+        } else if (_sourceLoaded) {
           _audioState = AudioState.paused;
         }
       });
     });
 
-    if (widget.autoPlay) Future.microtask(() => _play());
+    // โหลด audio source ครั้งเดียวตอน init
+    _loadAudioSource();
+  }
+
+  Future<void> _loadAudioSource() async {
+    try {
+      setState(() => _audioState = AudioState.loading);
+      if (widget.audioUrl != null && widget.audioUrl!.isNotEmpty) {
+        await _player.setUrl(widget.audioUrl!);
+      } else {
+        await _player.setFilePath(widget.audioPath);
+      }
+      _sourceLoaded = true;
+      if (mounted) {
+        setState(() => _audioState = AudioState.stopped);
+        if (widget.autoPlay) _player.play();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _audioState = AudioState.error);
+      }
+    }
   }
 
   @override
@@ -77,33 +102,19 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
     super.dispose();
   }
 
-  Future<void> _play() async {
-    try {
-      setState(() => _audioState = AudioState.loading);
-      if (widget.audioUrl != null && widget.audioUrl!.isNotEmpty) {
-        await _player.setUrl(widget.audioUrl!);
-      } else {
-        await _player.setFilePath(widget.audioPath);
-      }
-      await _player.play();
-    } catch (e) {
-      if (mounted) {
-        setState(() => _audioState = AudioState.error);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Playback error: $e')));
-      }
+  void _togglePlayPause() {
+    if (!_sourceLoaded || _audioState == AudioState.loading) return;
+
+    if (_audioState == AudioState.playing) {
+      _player.pause();
+    } else {
+      _player.play();
     }
   }
 
-  Future<void> _pause() async => _player.pause();
-  Future<void> _resume() async => _player.play();
-
-  Future<void> _stop() async {
-    await _player.stop();
-    await _player.seek(Duration.zero);
+  Future<void> _seek(Duration position) async {
+    await _player.seek(position);
   }
-
-  Future<void> _seek(Duration position) async => _player.seek(position);
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
@@ -135,31 +146,33 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
           const SizedBox(height: 12),
           Row(
             children: [
-              // Play/Pause Button
+              // Play/Pause Button — instant toggle, no reloading
               GestureDetector(
-                onTap: _audioState == AudioState.loading
-                    ? null
-                    : (_audioState == AudioState.playing
-                        ? _pause
-                        : (_audioState == AudioState.paused
-                            ? _resume
-                            : _play)),
+                onTap: _togglePlayPause,
                 child: Container(
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: widget.accentColor,
+                    color: (!_sourceLoaded || _audioState == AudioState.loading)
+                        ? widget.accentColor.withOpacity(0.5)
+                        : widget.accentColor,
                   ),
-                  child: Icon(
-                    _audioState == AudioState.loading
-                        ? Icons.hourglass_bottom
-                        : (_audioState == AudioState.playing
-                            ? Icons.pause
-                            : Icons.play_arrow),
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: _audioState == AudioState.loading
+                      ? const Padding(
+                          padding: EdgeInsets.all(13),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Icon(
+                          _audioState == AudioState.playing
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -207,9 +220,12 @@ class _VoicePlayerWidgetState extends State<VoicePlayerWidget> {
                 ),
               ),
               const SizedBox(width: 12),
-              // Stop Button
+              // Delete Button — ลบเสียงเพื่อบันทึกใหม่
               GestureDetector(
-                onTap: _stop,
+                onTap: () async {
+                  await _player.stop();
+                  widget.onDelete?.call();
+                },
                 child: Icon(Icons.close, color: Colors.grey[600], size: 24),
               ),
             ],
