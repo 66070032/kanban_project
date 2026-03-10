@@ -100,9 +100,7 @@ class UpcomingTasksList extends ConsumerWidget {
                               builder: (_) => TaskDetailPage(task: task),
                             ),
                           );
-                          if (user != null) {
-                            ref.invalidate(userTasksProvider(user.id));
-                          }
+                          ref.invalidate(userTasksProvider(user.id));
                         },
                       ),
                     );

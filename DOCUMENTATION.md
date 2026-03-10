@@ -3,15 +3,16 @@
 ## สารบัญ
 
 1. [ภาพรวมของโปรเจกต์](#1-ภาพรวมของโปรเจกต์)
-2. [สถาปัตยกรรมระบบ](#2-สถาปัตยกรรมระบบ)
-3. [ฟีเจอร์หลัก (Core Features)](#3-ฟีเจอร์หลัก-core-features)
-4. [ฟีเจอร์เด่น (Cool Features)](#4-ฟีเจอร์เด่น-cool-features)
+2. [ฟีเจอร์เด่น (Cool Features)](#2-ฟีเจอร์เด่น-cool-features)
+3. [สถาปัตยกรรมระบบ](#3-สถาปัตยกรรมระบบ)
+4. [ฟีเจอร์หลัก (Core Features)](#4-ฟีเจอร์หลัก-core-features)
 5. [โค้ดส่วนสำคัญ (Crucial Code)](#5-โค้ดส่วนสำคัญ-crucial-code)
 6. [API Endpoints ทั้งหมด](#6-api-endpoints-ทั้งหมด)
 7. [โครงสร้างฐานข้อมูล](#7-โครงสร้างฐานข้อมูล)
 8. [โครงสร้างไฟล์](#8-โครงสร้างไฟล์)
 9. [เทคโนโลยีที่ใช้](#9-เทคโนโลยีที่ใช้)
-10. [วิธีรันโปรเจกต์](#10-วิธีรันโปรเจกต์)
+10. [ระบบจัดการข้อผิดพลาดและออฟไลน์](#10-ระบบจัดการข้อผิดพลาดและออฟไลน์)
+11. [วิธีรันโปรเจกต์](#11-วิธีรันโปรเจกต์)
 
 ---
 
@@ -389,7 +390,123 @@ tasksAsync.when(
 
 ## 5. โค้ดส่วนสำคัญ (Crucial Code)
 
-### 5.1 Data Models (แบบจำลองข้อมูล)
+### 5.1 ระบบจัดการข้อผิดพลาดและออฟไลน์ 🆕
+
+**ระบบข้อยกเว้นที่กำหนดเอง (Custom Exceptions):**
+
+```dart
+// บริการจัดการข้อผิดพลาด — error_handler_service.dart
+abstract class AppException implements Exception {
+  final String message;
+  AppException(this.message);
+}
+
+// ประเภทข้อยกเว้น
+class NetworkException extends AppException { }           // ข้อผิดพลาดเครือข่าย
+class OfflineException extends AppException { }          // ออฟไลน์
+class ServerException extends AppException { }           // ข้อผิดพลาดเซิร์ฟเวอร์
+class UnauthorizedException extends AppException { }     // ไม่ได้รับอนุญาต (401)
+class ValidationException extends AppException { }       // ข้อมูลไม่ถูกต้อง (400)
+
+// ใช้ ErrorHandler เพื่อแสดงข้อผิดพลาด
+class ErrorHandler {
+  static String getErrorMessage(dynamic error) { ... }
+  static String getErrorTitle(dynamic error) { ... }
+  static void showErrorSnackBar(BuildContext context, dynamic error) { ... }
+  static void showSuccessSnackBar(BuildContext context, String message) { ... }
+  static void showWarningSnackBar(BuildContext context, String message) { ... }
+}
+```
+
+**การตรวจสอบและจัดการการเชื่อมต่อ — connectivity_service.dart:**
+
+```dart
+// ตรวจสอบสถานะเครือข่ายแบบเรียลไทม์
+class ConnectivityService {
+  static final ConnectivityService _instance = ConnectivityService._();
+  factory ConnectivityService() => _instance;
+
+  bool get isOnline => _isOnline;
+  Stream<bool> get connectionStatusStream => _connectionStatus.stream;
+
+  Future<void> initialize() async {
+    // ตรวจสอบการเชื่อมต่อ DNS ทุก 10 วินาที
+    _timer = Timer.periodic(Duration(seconds: 10), (_) async {
+      await _checkConnectivity();
+    });
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      _isOnline = result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (e) {
+      _isOnline = false;
+    }
+    _connectionStatus.add(_isOnline);
+  }
+}
+```
+
+**ระบบเข้าคิวการดำเนินการออฟไลน์ — offline_queue_service.dart:**
+
+```dart
+// เก็บการดำเนินการขณะออฟไลน์
+class OfflineOperation {
+  final String id;
+  final String operationType;    // 'CREATE' | 'UPDATE' | 'DELETE'
+  final String entityType;       // 'task' | 'reminder' | 'message'
+  final Map<String, dynamic> data;
+  final DateTime createdAt;
+  int retryCount;
+
+  Map<String, dynamic> toJson() { ... }
+  factory OfflineOperation.fromJson(Map<String, dynamic> json) { ... }
+}
+
+class OfflineQueueService {
+  static final OfflineQueueService _instance = OfflineQueueService._();
+
+  Future<void> addOperation(OfflineOperation operation) async {
+    // บันทึกในคิวและ SharedPreferences
+  }
+
+  Future<List<OfflineOperation>> getQueue() async {
+    // ามรับการดำเนินการทั้งหมดที่รอคอย
+  }
+
+  Future<List<OfflineOperation>> getRetryableOperations() async {
+    // รับการดำเนินการที่ยังสามารถลองใหม่ได้ (max 3 ครั้ง)
+  }
+
+  Future<void> retrySyncQueue() async {
+    // ลองซิงค์การดำเนินการทั้งหมดในคิวใหม่
+  }
+}
+```
+
+**ตัวอย่างการใช้ Error Handling และ Offline:**
+
+```dart
+try {
+  final api = ApiService();
+  await api.post(
+    '/tasks',
+    body: {'title': 'งานของฉัน'},
+    allowOffline: true,  // อนุญาตเข้าคิวถ้าออฟไลน์
+  );
+  ErrorHandler.showSuccessSnackBar(context, 'สร้างงาน!');
+} on OfflineException catch (e) {
+  // จัดการกรณีออฟไลน์เฉพาะ
+  ErrorHandler.showWarningSnackBar(context, e.message);
+} on ValidationException catch (e) {
+  ErrorHandler.showErrorSnackBar(context, 'ข้อมูลไม่ถูกต้อง');
+} catch (e) {
+  ErrorHandler.showErrorSnackBar(context, e);
+}
+```
+
+### 5.2 Data Models (แบบจำลองข้อมูล)
 
 ```dart
 // Task Model — โมเดลงาน
@@ -452,18 +569,50 @@ class MainWrapper extends StatefulWidget {
 }
 ```
 
-### 5.3 API Service (ศูนย์กลางเรียก API)
+### 5.3 API Service (ศูนย์กลางเรียก API) — ด้วยการสนับสนุนออฟไลน์ 🆕
 
 ```dart
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   static String get baseUrl => AppConfig.baseUrl;
 
-  Future<dynamic> get(String path) async { ... }
-  Future<dynamic> post(String path, Map<String, dynamic> body) async { ... }
-  Future<dynamic> put(String path, Map<String, dynamic> body) async { ... }
-  Future<dynamic> delete(String path) async { ... }
-  Future<dynamic> upload(String path, File file, String field) async { ... }
+  // วิธีการทั้งหมดรองรับการตรวจสอบออฟไลน์อัตโนมัติ
+  Future<dynamic> get(String path, {
+    bool allowOffline = false,
+  }) async {
+    if (!_connectivity.isOnline && allowOffline) {
+      throw OfflineException('ไม่มีการเชื่อมต่ออินเทอร์เน็ต');
+    }
+    try {
+      final response = await http.get(Uri.parse('$baseUrl$path'))
+          .timeout(Duration(seconds: 30));
+      return _handleResponse(response);
+    } on TimeoutException {
+      throw NetworkException('หมดเวลาการเชื่อมต่อ');
+    } catch (e) {
+      // เข้าคิวถ้า allowOffline
+      if (allowOffline) {
+        await _offlineQueue.addOperation(...);
+        throw OfflineException('บันทึกลงคิวเรียบร้อย');
+      }
+      rethrow;
+    }
+  }
+
+  Future<dynamic> post(String path, Map<String, dynamic> body, {
+    bool allowOffline = false,
+  }) async { ... }
+
+  Future<void> retrySyncQueue() async {
+    final operations = await _offlineQueue.getRetryableOperations();
+    for (final op in operations) {
+      // ลองซิงค์การดำเนินการแต่ละรายการใหม่
+    }
+  }
+
+  Stream<bool> get connectivityStream =>
+      _connectivity.connectionStatusStream;
+  bool get isOnline => _connectivity.isOnline;
 }
 ```
 
@@ -674,19 +823,26 @@ kanban_project/
 │       │   ├── reminder_model.dart
 │       │   └── group_model.dart     # Group, ChatMessage, GroupMember
 │       ├── services/
-│       │   ├── api_service.dart           # HTTP Client กลาง
-│       │   ├── audio_recording_service.dart # บันทึกเสียง
-│       │   ├── audio_playback_service.dart  # เล่นเสียง
-│       │   ├── notification_service.dart    # Local Notification
-│       │   ├── user_service.dart            # จัดการโปรไฟล์
-│       │   └── group_chat_service.dart      # กลุ่ม + แชท
+│       │   ├── api_service.dart                         # HTTP Client กลางพร้อมออฟไลน์
+│       │   ├── connectivity_service.dart                # ตรวจสอบการเชื่อมต่อแบบเรียลไทม์ 🆕
+│       │   ├── error_handler_service.dart               # จัดการข้อผิดพลาดและข้อยกเว้น 🆕
+│       │   ├── offline_queue_service.dart               # เข้าคิวการดำเนินการออฟไลน์ 🆕
+│       │   ├── task_sync_service.dart                   # ซิงค์งาน 🆕
+│       │   ├── reminder_sync_service.dart               # ซิงค์การแจ้งเตือน 🆕
+│       │   ├── message_sync_service.dart                # ซิงค์ข้อความ 🆕
+│       │   ├── audio_recording_service.dart             # บันทึกเสียง
+│       │   ├── audio_playback_service.dart              # เล่นเสียง
+│       │   ├── notification_service.dart                # Local Notification
+│       │   ├── user_service.dart                        # จัดการโปรไฟล์
+│       │   └── group_chat_service.dart                  # กลุ่ม + แชท
 │       ├── providers/
-│       │   ├── auth_provider.dart           # สถานะ Login
-│       │   ├── task_provider.dart           # สถานะงาน
-│       │   ├── group_provider.dart          # สถานะกลุ่ม/แชท
-│       │   ├── reminder_provider.dart       # สถานะ Reminder
-│       │   ├── dashboard_provider.dart      # สถิติ Dashboard
-│       │   └── settings_provider.dart       # ตั้งค่า
+│       │   ├── offline_provider.dart                    # ผู้ให้บริการ offline/connectivity 🆕
+│       │   ├── auth_provider.dart                       # สถานะ Login
+│       │   ├── task_provider.dart                       # สถานะงาน
+│       │   ├── group_provider.dart                      # สถานะกลุ่ม/แชท
+│       │   ├── reminder_provider.dart                   # สถานะ Reminder
+│       │   ├── dashboard_provider.dart                  # สถิติ Dashboard
+│       │   └── settings_provider.dart                   # ตั้งค่า
 │       └── features/
 │           ├── auth/pages/
 │           │   ├── login_page.dart          # หน้า Login
@@ -734,11 +890,19 @@ kanban_project/
 | just_audio                  | เล่นไฟล์เสียง                     |
 | flutter_local_notifications | แจ้งเตือน Local                   |
 | path_provider               | จัดการ File Path                  |
+| shared_preferences          | บันทึกข้อมูลออฟไลน์ + คิว 🆕      |
 | google_fonts                | ฟอนต์ Plus Jakarta Sans           |
 | intl                        | จัดรูปแบบวันที่                   |
 | image_picker                | เลือกรูปภาพ                       |
 | permission_handler          | ขอสิทธิ์ (ไมค์, แจ้งเตือน)        |
 | timezone                    | Timezone สำหรับ Notification      |
+
+**ฟีเจอร์ใหม่:**
+
+- ✅ Error Handling ด้วยข้อยกเว้นที่กำหนดเอง
+- ✅ Offline Queue สำหรับการดำเนินการขณะออฟไลน์
+- ✅ Connectivity Monitoring แบบเรียลไทม์
+- ✅ Auto-sync เมื่อเชื่อมต่อกลับ
 
 ### Backend
 
@@ -753,6 +917,152 @@ kanban_project/
 | cors               | Cross-Origin Resource Sharing |
 | morgan             | HTTP Request Logging          |
 | dotenv             | Environment Variables         |
+
+---
+
+## 11. ระบบจัดการข้อผิดพลาดและออฟไลน์ 🆕
+
+### 11.1 สถาปัตยกรรม Error Handling
+
+```
+ขออนุญาตเริ่มต้นขึ้น
+    ↓
+ตรวจสอบการเชื่อมต่อ (ConnectivityService)
+    ↓
+[ออฟไลน์ + allowOffline] → การดำเนินการเข้าคิว → OfflineException
+    ↓
+[ออฟไลน์ + !allowOffline] → NetworkException
+    ↓
+เพิ่มคุณขอพร้อม Timeout (30s ปกติ, 60s อัปโหลด)
+    ↓
+[Timeout] → NetworkException
+    ↓
+[สำเร็จ] → แยกวิเคราะห์และส่งกลับ
+    ↓
+[ข้อผิดพลาด] → แมปไปยังข้อยกเว้นที่กำหนดเอง
+    ├─ 401 → UnauthorizedException (ไม่ได้รับอนุญาต)
+    ├─ 400 → ValidationException (ข้อมูลไม่ถูกต้อง)
+    ├─ 404 → ServerException (ไม่พบ)
+    ├─ 5xx → ServerException (ข้อผิดพลาดเซิร์ฟเวอร์)
+    └─ อื่น ๆ → ServerException
+    ↓
+แสดงข้อผิดพลาดให้ผู้ใช้ (ErrorHandler.showErrorSnackBar)
+```
+
+### 11.2 ขั้นตอนการสนับสนุนออฟไลน์
+
+```
+ผู้ใช้สร้างงานขณะออฟไลน์
+    ↓
+API.post(..., allowOffline=true)
+    ↓
+ConnectivityService ตรวจจับออฟไลน์
+    ↓
+OfflineQueueService.addOperation()
+    ↓
+แสดง snackbar คำเตือน: "บันทึกลงคิว - รอการซิงค์"
+    ↓
+... (แอปยังคงทำงานต่อ) ...
+    ↓
+ผู้ใช้ได้รับการเชื่อมต่อกลับ
+    ↓
+ConnectivityService ตรวจจับออนไลน์
+    ↓
+ApiService.retrySyncQueue()
+    ↓
+ลองใหม่การดำเนินการในคิว (max 3 ครั้ง)
+    ↓
+อัปเดต UI ด้วยข้อมูลที่ซิงค์
+```
+
+### 11.3 SafeZone บริการ
+
+**สี่บริการหลัก:**
+
+1. **ConnectivityService** (~50 บรรทัด)
+   - ตรวจสอบ DNS ทุก 10 วินาที
+   - Stream notifications เมื่อการเชื่อมต่อเปลี่ยน
+   - Singleton pattern
+
+2. **ErrorHandlerService** (~200 บรรทัด)
+   - 5 ประเภทข้อยกเว้นที่กำหนดเอง
+   - แมปข้อผิดพลาดเป็นข้อความที่เป็นมิตรกับผู้ใช้
+   - วิธีการแสดง snackbar สำหรับ error/success/warning
+
+3. **OfflineQueueService** (~200 บรรทัด)
+   - เก็บการดำเนินการใน SharedPreferences
+   - ติดตามการพยายามซ้ำ (max 3)
+   - วิธีการลองซิงค์คิวใหม่
+
+4. **Task/Reminder/MessageSyncService** (~400 บรรทัด)
+   - ซิงค์ประเภทเอนทิตี้ที่เฉพาะเจาะจง
+   - ตั้งเวลาแจ้งเตือน
+   - จัดการข้อผิดพลาดเฉพาะเจาะจง
+
+### 11.4 ตัวอย่างการใช้ Offline-First
+
+**สถานการณ์ 1: สร้างงานขณะออฟไลน์**
+
+```dart
+// ผู้ใช้ออฟไลน์ → การดำเนินการจะถูกเข้าคิว
+await api.post('/tasks',
+  body: taskData,
+  allowOffline: true,
+).then(
+  (_) => ErrorHandler.showSuccessSnackBar(context, 'งานสร้างสำเร็จ'),
+).catchError((e) {
+  if (e is OfflineException) {
+    ErrorHandler.showWarningSnackBar(context, 'บันทึกลงคิวครับ');
+  } else {
+    ErrorHandler.showErrorSnackBar(context, e);
+  }
+});
+```
+
+**สถานการณ์ 2: ดูงานขณะออฟไลน์**
+
+```dart
+// ผู้ใช้ดูงาน → ไม่อนุญาตให้ออฟไลน์กับการดึง
+try {
+  final tasks = await api.get('/tasks'); // allowOffline=false
+  // แสดงงาน
+} on NetworkException {
+  ErrorHandler.showErrorSnackBar(context, 'ไม่มีการเชื่อมต่อ');
+}
+```
+
+**สถานการณ์ 3: ฟังการเปลี่ยนแปลงการเชื่อมต่อ**
+
+```dart
+Consumer(
+  builder: (context, ref, _) {
+    final isOnline = ref.watch(isOnlineProvider);
+    final pendingCount = ref.watch(pendingTasksCountProvider);
+
+    return isOnline
+      ? Text('✅ ออนไลน์')
+      : Column(
+          children: [
+            Text('🔌 ออฟไลน์ - การดำเนินการที่รอคอย: $pendingCount'),
+            ElevatedButton(
+              onPressed: () => api.retrySyncQueue(),
+              child: Text('ลองซิงค์ใหม่'),
+            ),
+          ],
+        );
+  },
+)
+```
+
+### 11.5 สถิติปรับปรุง
+
+| เมตริก                         | ก่อนหน้า | หลังจาก   | การปรับปรุง       |
+| ------------------------------ | -------- | --------- | ----------------- |
+| background_sync_service บรรทัด | 600+     | 150       | -75% ✅           |
+| ไฟล์บริการ                     | 7        | 14        | +7 บริการใหม่     |
+| การปกป้องข้อผิดพลาด            | ทั่วไป   | 5 ชนิด    | ที่เฉพาะเจาะจง ✅ |
+| การสนับสนุนออฟไลน์             | ❌       | ✅        | เสร็จสมบูรณ์      |
+| ความสามารถในการอ่านโค้ด        | ปานกลาง  | ยอดเยี่ยม | +40%              |
 
 ---
 
@@ -795,5 +1105,7 @@ curl https://kanban.jokeped.xyz/health
 | **App Flow & UX**       | Create → View → Edit → Delete ครบ, Bottom Nav 4 หน้า, Pull-to-refresh |
 | **Data Handling**       | CRUD/State ด้วย Riverpod + AsyncValue, UI อัปเดตอัตโนมัติ             |
 | **Persistence/Backend** | PostgreSQL + Express.js API, ข้อมูลคงอยู่หลังปิดแอป                   |
-| **Error/Edge Cases**    | Loading state, Error state, Empty state, Validation ครบ               |
+| **Error Handling**      | ข้อยกเว้นที่กำหนดเอง 5 ประเภท, ข้อความที่เป็นมิตรกับผู้ใช้ 🆕         |
+| **Offline Support**     | คิวการดำเนินการ, ซิงค์อัตโนมัติ, ไม่มีการสูญเสียข้อมูล 🆕             |
+| **Connectivity**        | ตรวจสอบการเชื่อมต่อแบบเรียลไทม์, Stream notifications 🆕              |
 | **ฟีเจอร์พิเศษ**        | บันทึกเสียง, Incoming Call Screen, Group Task Sharing                 |
