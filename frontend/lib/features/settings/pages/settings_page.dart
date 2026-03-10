@@ -163,8 +163,9 @@ class SettingsPage extends ConsumerWidget {
                         title: '\u23F0 Scheduled Test',
                         body:
                             'This was scheduled 10 seconds ago. Notifications work!',
-                        scheduledTime:
-                            DateTime.now().add(const Duration(seconds: 10)),
+                        scheduledTime: DateTime.now().add(
+                          const Duration(seconds: 10),
+                        ),
                         payload: 'scheduled_test',
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +222,7 @@ class SettingsPage extends ConsumerWidget {
                   MenuItemWithValue(
                     icon: Icons.info_outline,
                     title: 'Version',
-                    value: '1.2.0',
+                    value: '1.3.0',
                     onTap: () {},
                   ),
                   CustomDivider(),

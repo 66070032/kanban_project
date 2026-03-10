@@ -38,8 +38,7 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
   Future<void> _loadMembers(int groupId) async {
     setState(() => _loadingMembers = true);
     try {
-      final members =
-          await ref.read(groupMembersProvider(groupId).future);
+      final members = await ref.read(groupMembersProvider(groupId).future);
       final user = ref.read(authProvider);
       setState(() {
         // Exclude self from the list
@@ -53,9 +52,9 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
         _loadingMembers = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load members: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load members: $e')));
       }
     }
   }
@@ -83,19 +82,19 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
   }
 
   DateTime get _combinedDueDate => DateTime(
-        _dueDate.year,
-        _dueDate.month,
-        _dueDate.day,
-        _dueTime.hour,
-        _dueTime.minute,
-      );
+    _dueDate.year,
+    _dueDate.month,
+    _dueDate.day,
+    _dueTime.hour,
+    _dueTime.minute,
+  );
 
   Future<void> _send() async {
     final message = _messageController.text.trim();
     if (message.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a message')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please enter a message')));
       return;
     }
     if (_selectedMemberIds.isEmpty) {
@@ -129,10 +128,11 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
     setState(() => _sending = false);
 
     final names = _selectedMemberIds
-        .map((id) => _members.firstWhere(
-              (m) => m.id == id,
-              orElse: () => _members.first,
-            ).displayName)
+        .map(
+          (id) => _members
+              .firstWhere((m) => m.id == id, orElse: () => _members.first)
+              .displayName,
+        )
         .join(', ');
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -152,8 +152,9 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider);
-    final groupsAsync =
-        user != null ? ref.watch(userGroupsProvider(user.id)) : null;
+    final groupsAsync = user != null
+        ? ref.watch(userGroupsProvider(user.id))
+        : null;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F5F9),
@@ -181,8 +182,10 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 decoration: _cardDecoration(),
                 child: groupsAsync == null
                     ? const Text('Not logged in')
@@ -245,88 +248,87 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
                         ),
                       )
                     : _loadingMembers
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                                child: CircularProgressIndicator(
-                                    color: AppColors.cyan)),
-                          )
-                        : _members.isEmpty
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8),
-                                child: Text(
-                                  'No other members in this group',
-                                  style: TextStyle(color: AppColors.subText),
-                                ),
-                              )
-                            : Column(
-                                children: [
-                                  // Select All
-                                  CheckboxListTile(
-                                    title: Text(
-                                      'Select All (${_members.length})',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    value: _selectedMemberIds.length ==
-                                        _members.length,
-                                    activeColor: AppColors.cyan,
-                                    onChanged: (v) {
-                                      setState(() {
-                                        if (v == true) {
-                                          _selectedMemberIds.addAll(
-                                            _members.map((m) => m.id),
-                                          );
-                                        } else {
-                                          _selectedMemberIds.clear();
-                                        }
-                                      });
-                                    },
-                                    contentPadding: EdgeInsets.zero,
-                                    dense: true,
-                                  ),
-                                  const Divider(height: 1),
-                                  ..._members.map(
-                                    (member) => CheckboxListTile(
-                                      title: Text(member.displayName),
-                                      subtitle: Text(
-                                        member.email,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                      secondary: CircleAvatar(
-                                        backgroundColor:
-                                            AppColors.cyan.withValues(alpha: 0.2),
-                                        child: Text(
-                                          member.displayName.isNotEmpty
-                                              ? member.displayName[0]
-                                                  .toUpperCase()
-                                              : '?',
-                                          style: const TextStyle(
-                                            color: AppColors.cyan,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      value: _selectedMemberIds
-                                          .contains(member.id),
-                                      activeColor: AppColors.cyan,
-                                      onChanged: (v) {
-                                        setState(() {
-                                          if (v == true) {
-                                            _selectedMemberIds.add(member.id);
-                                          } else {
-                                            _selectedMemberIds
-                                                .remove(member.id);
-                                          }
-                                        });
-                                      },
-                                      contentPadding: EdgeInsets.zero,
-                                      dense: true,
-                                    ),
-                                  ),
-                                ],
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.cyan,
+                          ),
+                        ),
+                      )
+                    : _members.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'No other members in this group',
+                          style: TextStyle(color: AppColors.subText),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          // Select All
+                          CheckboxListTile(
+                            title: Text(
+                              'Select All (${_members.length})',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
                               ),
+                            ),
+                            value: _selectedMemberIds.length == _members.length,
+                            activeColor: AppColors.cyan,
+                            onChanged: (v) {
+                              setState(() {
+                                if (v == true) {
+                                  _selectedMemberIds.addAll(
+                                    _members.map((m) => m.id),
+                                  );
+                                } else {
+                                  _selectedMemberIds.clear();
+                                }
+                              });
+                            },
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                          ),
+                          const Divider(height: 1),
+                          ..._members.map(
+                            (member) => CheckboxListTile(
+                              title: Text(member.displayName),
+                              subtitle: Text(
+                                member.email,
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              secondary: CircleAvatar(
+                                backgroundColor: AppColors.cyan.withValues(
+                                  alpha: 0.2,
+                                ),
+                                child: Text(
+                                  member.displayName.isNotEmpty
+                                      ? member.displayName[0].toUpperCase()
+                                      : '?',
+                                  style: const TextStyle(
+                                    color: AppColors.cyan,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              value: _selectedMemberIds.contains(member.id),
+                              activeColor: AppColors.cyan,
+                              onChanged: (v) {
+                                setState(() {
+                                  if (v == true) {
+                                    _selectedMemberIds.add(member.id);
+                                  } else {
+                                    _selectedMemberIds.remove(member.id);
+                                  }
+                                });
+                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
               const SizedBox(height: 24),
 
@@ -360,8 +362,11 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
                         onTap: _pickDate,
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today,
-                                size: 20, color: AppColors.cyan),
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 20,
+                              color: AppColors.cyan,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               DateFormat('MMM dd, yyyy').format(_dueDate),
@@ -374,19 +379,18 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
                         ),
                       ),
                     ),
-                    Container(
-                      width: 1,
-                      height: 24,
-                      color: Colors.grey[300],
-                    ),
+                    Container(width: 1, height: 24, color: Colors.grey[300]),
                     Expanded(
                       child: InkWell(
                         onTap: _pickTime,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.access_time,
-                                size: 20, color: AppColors.cyan),
+                            const Icon(
+                              Icons.access_time,
+                              size: 20,
+                              color: AppColors.cyan,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               _dueTime.format(context),
@@ -425,8 +429,9 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor:
-                                AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Icon(Icons.send, color: Colors.white),
@@ -442,7 +447,9 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.cyan,
-                    disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.5),
+                    disabledBackgroundColor: AppColors.cyan.withValues(
+                      alpha: 0.5,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -458,23 +465,23 @@ class _SendNotificationPageState extends ConsumerState<SendNotificationPage> {
   }
 
   Widget _sectionTitle(String text) => Text(
-        text,
-        style: const TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-          color: AppColors.text,
-        ),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 15,
+      fontWeight: FontWeight.w700,
+      color: AppColors.text,
+    ),
+  );
 
   BoxDecoration _cardDecoration() => BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      );
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(14),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.06),
+        blurRadius: 12,
+        offset: const Offset(0, 3),
+      ),
+    ],
+  );
 }

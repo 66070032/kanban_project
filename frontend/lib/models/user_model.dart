@@ -22,4 +22,12 @@ class User {
       createdAt: json['created_at'],
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'display_name': displayName,
+        'avatar_url': avatarUrl,
+        'created_at': createdAt,
+      };
 }
