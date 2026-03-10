@@ -87,8 +87,10 @@ class BackgroundSyncService {
     await plugin.initialize(settings: initSettings);
 
     // Create channels
-    final androidPlugin = plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final androidPlugin = plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await androidPlugin?.createNotificationChannel(
       const AndroidNotificationChannel(
         'kanban_reminders',
@@ -178,12 +180,13 @@ class BackgroundSyncService {
               channelId: 'kanban_reminders',
               channelName: 'Task Reminders',
               title: '\u23F0 Task Due: $title',
-              body: description.isNotEmpty ? description : 'Your task is due now!',
+              body: description.isNotEmpty
+                  ? description
+                  : 'Your task is due now!',
               scheduledTime: dueAt,
             );
 
-            final fiveMinBefore =
-                dueAt.subtract(const Duration(minutes: 5));
+            final fiveMinBefore = dueAt.subtract(const Duration(minutes: 5));
             if (fiveMinBefore.isAfter(now)) {
               await _scheduleCallNotification(
                 plugin,
@@ -261,8 +264,7 @@ class BackgroundSyncService {
               scheduledTime: dueDate,
             );
 
-            final fiveMinBefore =
-                dueDate.subtract(const Duration(minutes: 5));
+            final fiveMinBefore = dueDate.subtract(const Duration(minutes: 5));
             if (fiveMinBefore.isAfter(now)) {
               await _scheduleCallNotification(
                 plugin,
@@ -300,7 +302,7 @@ class BackgroundSyncService {
       final lastCheckIso = prefs.getString(_kLastMessageTs);
       final lastCheck = lastCheckIso != null
           ? DateTime.tryParse(lastCheckIso) ??
-              DateTime.now().subtract(const Duration(minutes: 15))
+                DateTime.now().subtract(const Duration(minutes: 15))
           : DateTime.now().subtract(const Duration(minutes: 15));
       final userName = prefs.getString(_kUserName) ?? '';
 
