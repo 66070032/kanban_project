@@ -182,12 +182,15 @@ class ReminderSyncService {
           playSound: true,
           enableVibration: true,
           icon: '@mipmap/ic_launcher',
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.call,
+          autoCancel: true,
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       title: title,
       body: body,
-      payload: taskTitle != null ? 'call:$taskTitle' : null,
+      payload: taskTitle != null ? 'call:$taskTitle\x1F' : null,
     );
   }
 }

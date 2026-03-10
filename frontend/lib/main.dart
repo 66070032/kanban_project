@@ -13,21 +13,24 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await NotificationService().initialize();
-  } catch (_) {
-    // Notifications unavailable on this platform/emulator configuration
-  }
+  } catch (_) {}
 
-  // Initialize WorkManager as fallback for when foreground service is killed
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
 
-  // Initialize foreground task for real-time polling (like Messenger)
   BackgroundSyncService.initForegroundTask();
 
   // When a notification is tapped
   NotificationService.onNotificationTap = (payload) {
-    // Only show incoming call screen for fake-call notifications (prefixed with 'call:')
+    // Only show incoming call screen for fake-call notifications
+    // Payload format: "call:<taskTitle>\x1F<voiceUrl>" (voiceUrl may be empty)
     if (payload != null && payload.startsWith('call:')) {
-      final taskTitle = payload.substring(5); // Remove 'call:' prefix
+      final data = payload.substring(5);
+      final parts = data.split('\x1F');
+      final taskTitle = parts[0];
+      final voiceUrl = parts.length > 1 && parts[1].isNotEmpty
+          ? parts[1]
+          : null;
+
       navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (_) => IncomingCallScreen(
@@ -39,11 +42,11 @@ void main() async {
                 : 'You have a task reminder!',
             onAccept: () {},
             onReject: () {},
+            voiceInstructionUrl: voiceUrl,
           ),
         ),
       );
     }
-    // For regular notifications, do nothing special (the app is already open)
   };
 
   runApp(const ProviderScope(child: MyApp()));

@@ -59,15 +59,19 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
           '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
       await _recorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc, bitRate: 128000),
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 256000,
+          sampleRate: 44100,
+          numChannels: 2,
+        ),
         path: path,
       );
 
       _stopwatch.reset();
       _stopwatch.start();
 
-      _durationTimer =
-          Timer.periodic(const Duration(milliseconds: 100), (_) {
+      _durationTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
         if (mounted && _isRecording) {
           setState(() => _recordingDuration = _stopwatch.elapsed);
         }
@@ -79,8 +83,9 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Recording error: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Recording error: $e')));
         setState(() => _isRecording = false);
       }
     }
@@ -104,9 +109,9 @@ class _VoiceRecorderWidgetState extends State<VoiceRecorderWidget> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error stopping recording: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error stopping recording: $e')));
       }
     }
   }

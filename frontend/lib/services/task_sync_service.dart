@@ -43,6 +43,7 @@ class TaskSyncService {
           final description = task['description'] ?? '';
           final status = task['status']?.toString().toLowerCase() ?? 'todo';
           final dueAtStr = task['due_at'];
+          final voiceUuid = task['voice_instruction_uuid']?.toString();
 
           // Notify about new tasks (not known before)
           if (id.isNotEmpty && !knownIds.contains(id) && status != 'done') {
@@ -77,6 +78,10 @@ class TaskSyncService {
 
               final fiveMinBefore = dueAt.subtract(const Duration(minutes: 5));
               if (fiveMinBefore.isAfter(now)) {
+                // Build voice instruction URL if UUID exists
+                final voiceUrl = voiceUuid != null && voiceUuid.isNotEmpty
+                    ? '$_baseUrl/uploads/$voiceUuid'
+                    : '';
                 await _scheduleCallNotification(
                   plugin,
                   id: baseId + 100000,
@@ -84,6 +89,7 @@ class TaskSyncService {
                   body: '$title \u2014 due in 5 minutes!',
                   scheduledTime: fiveMinBefore,
                   taskTitle: title,
+                  voiceUrl: voiceUrl,
                 );
               }
             }
@@ -161,6 +167,7 @@ class TaskSyncService {
     required String body,
     required DateTime scheduledTime,
     String? taskTitle,
+    String? voiceUrl,
   }) async {
     if (scheduledTime.isBefore(DateTime.now())) return;
     await plugin.zonedSchedule(
@@ -175,12 +182,17 @@ class TaskSyncService {
           playSound: true,
           enableVibration: true,
           icon: '@mipmap/ic_launcher',
+          fullScreenIntent: true,
+          category: AndroidNotificationCategory.call,
+          autoCancel: true,
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       title: title,
       body: body,
-      payload: taskTitle != null ? 'call:$taskTitle' : null,
+      payload: taskTitle != null
+          ? 'call:$taskTitle\x1F${voiceUrl ?? ''}'
+          : null,
     );
   }
 }
