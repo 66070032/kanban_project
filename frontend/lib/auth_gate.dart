@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/auth_provider.dart';
 import 'features/auth/pages/login_page.dart';
-import 'main_wrapper.dart'; // หรือหน้าหลักของคุณ
+import 'main_wrapper.dart';
 
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
@@ -15,6 +15,6 @@ class AuthGate extends ConsumerWidget {
       return const LoginPage();
     }
 
-    return const MainWrapper(); // หน้า Home หลักของคุณ
+    return const MainWrapper();
   }
 }
